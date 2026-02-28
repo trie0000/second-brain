@@ -1,0 +1,753 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>🧠 セカンドブレーン</title>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@300;400;500;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #f7f7f5; --surface: #fff; --surface-alt: #fafaf8;
+    --border: #e8e6e1; --border-light: #f0eeea;
+    --text: #1a1a1a; --text-sec: #6b6b6b; --text-muted: #9b9b9b;
+    --accent: #2563eb; --accent-light: #eff4ff;
+    --red: #dc2626; --red-light: #fef2f2;
+    --green: #16a34a; --green-light: #f0fdf4;
+    --orange: #ea580c; --orange-light: #fff7ed;
+    --yellow: #ca8a04; --yellow-light: #fefce8;
+    --font: 'Noto Sans JP', -apple-system, sans-serif;
+    --mono: 'JetBrains Mono', monospace;
+    --radius: 12px;
+  }
+  * { margin:0; padding:0; box-sizing:border-box; }
+  body { font-family:var(--font); background:var(--bg); color:var(--text); line-height:1.6; min-height:100vh; }
+
+  .header { background:var(--surface); border-bottom:1px solid var(--border); padding:12px 24px; display:flex; align-items:center; justify-content:space-between; position:sticky; top:0; z-index:100; }
+  .header-left { display:flex; align-items:center; gap:12px; }
+  .logo { font-size:18px; font-weight:700; letter-spacing:-0.02em; }
+  .phase-badge { font-size:10px; padding:2px 8px; background:var(--accent-light); color:var(--accent); border-radius:20px; font-weight:500; }
+  .header-right { display:flex; align-items:center; gap:12px; }
+
+  .status-badge { display:inline-flex; align-items:center; gap:6px; padding:4px 12px; border-radius:20px; font-size:12px; font-weight:500; }
+  .status-idle { background:#f3f4f6; color:#6b7280; }
+  .status-rec { background:var(--red-light); color:var(--red); }
+  .status-transcribing { background:var(--accent-light); color:var(--accent); }
+  .status-analyzing { background:var(--yellow-light); color:var(--yellow); }
+  .pulse-dot { width:8px; height:8px; background:var(--red); border-radius:50%; animation:pulse 1.5s ease-in-out infinite; }
+  @keyframes pulse { 0%,100%{opacity:1;transform:scale(1)} 50%{opacity:.5;transform:scale(.8)} }
+
+  .timer { font-family:var(--mono); font-size:13px; color:var(--text-muted); min-width:48px; }
+  .btn-settings { background:none; border:1px solid var(--border); border-radius:8px; padding:5px 10px; cursor:pointer; font-size:14px; color:var(--text-sec); }
+  .btn-settings:hover { background:var(--surface-alt); }
+
+  .controls { background:var(--surface); border-bottom:1px solid var(--border-light); padding:8px 24px; display:flex; align-items:center; gap:8px; flex-wrap:wrap; }
+  .btn { display:inline-flex; align-items:center; gap:6px; padding:7px 16px; border:none; border-radius:8px; font-size:13px; font-weight:500; font-family:var(--font); cursor:pointer; transition:all .15s; white-space:nowrap; }
+  .btn:disabled { opacity:.4; cursor:not-allowed; }
+  .btn-rec { background:var(--red); color:#fff; } .btn-rec:hover:not(:disabled){background:#b91c1c}
+  .btn-stop { background:#4b5563; color:#fff; } .btn-stop:hover:not(:disabled){background:#374151}
+  .btn-analyze { background:var(--accent); color:#fff; } .btn-analyze:hover:not(:disabled){background:#1d4ed8}
+  .btn-outline { background:var(--surface); border:1px solid var(--border); color:var(--text-sec); } .btn-outline:hover:not(:disabled){background:var(--surface-alt)}
+  .controls-right { margin-left:auto; display:flex; align-items:center; gap:8px; }
+  .auto-label { display:flex; align-items:center; gap:6px; font-size:12px; color:var(--text-muted); cursor:pointer; user-select:none; }
+  .auto-label input { accent-color:var(--accent); }
+
+  .error-bar { margin:12px 24px 0; padding:10px 16px; background:var(--red-light); border:1px solid #fecaca; border-radius:8px; font-size:13px; color:var(--red); display:none; align-items:center; justify-content:space-between; }
+  .error-bar button { background:none; border:none; color:var(--red); cursor:pointer; font-size:16px; }
+
+  .main { max-width:1400px; margin:0 auto; padding:16px 24px; display:grid; grid-template-columns:1fr 1fr 1fr; gap:16px; min-height:calc(100vh - 120px); }
+  .card { background:var(--surface); border:1px solid var(--border); border-radius:var(--radius); box-shadow:0 1px 3px rgba(0,0,0,.04); display:flex; flex-direction:column; overflow:hidden; }
+  .card-header { padding:12px 16px; border-bottom:1px solid var(--border-light); display:flex; align-items:center; justify-content:space-between; flex-shrink:0; }
+  .card-title { font-size:12px; font-weight:600; color:var(--text-sec); text-transform:uppercase; letter-spacing:.05em; }
+  .card-meta { font-size:11px; color:var(--text-muted); font-family:var(--mono); }
+  .card-body { padding:16px; flex:1; overflow-y:auto; }
+
+  /* 文字起こし表示 */
+  .transcript-line { font-size:13px; color:var(--text-sec); margin-bottom:6px; line-height:1.7; }
+  .transcript-empty { display:flex; align-items:center; justify-content:center; height:100%; text-align:center; color:var(--text-muted); }
+  .transcript-empty-icon { font-size:40px; margin-bottom:12px; }
+  .transcript-empty p { font-size:13px; }
+  .transcript-empty .sub { font-size:11px; margin-top:4px; }
+
+  /* 話者分離表示 */
+  .speaker-segment { display:flex; gap:8px; margin-bottom:6px; align-items:flex-start; }
+  .speaker-label { font-weight:600; font-size:0.7rem; white-space:nowrap; padding:2px 7px; border-radius:4px; margin-top:2px; font-family:var(--mono); flex-shrink:0; }
+  .speaker-text { flex:1; line-height:1.65; font-size:13px; color:var(--text-sec); }
+  .speaker-a .speaker-label { background:#dbeafe; color:#1d4ed8; }
+  .speaker-b .speaker-label { background:#dcfce7; color:#15803d; }
+  .speaker-c .speaker-label { background:#fef9c3; color:#a16207; }
+  .speaker-d .speaker-label { background:#f3e8ff; color:#7e22ce; }
+  .speaker-e .speaker-label { background:#ffe4e6; color:#be123c; }
+  .speaker-unknown .speaker-label { background:#f3f4f6; color:#6b7280; }
+  .transcript-pending-block { margin-top:8px; padding:8px 10px; border-left:3px solid #cbd5e1; }
+  .transcript-pending-label { font-size:10px; color:var(--text-muted); margin-bottom:4px; text-transform:uppercase; letter-spacing:.04em; }
+  .transcript-pending-text { font-size:13px; color:var(--text-muted); line-height:1.65; }
+  .processing-indicator { display:flex; align-items:center; gap:8px; font-size:12px; color:var(--accent); padding:8px 0; }
+  .spin { animation:spin 1s linear infinite; display:inline-block; }
+  @keyframes spin { from{transform:rotate(0deg)} to{transform:rotate(360deg)} }
+
+  /* チャンク進行バー（左ペイン下部） */
+  .progress-bar-wrap { padding:8px 16px 12px; border-top:1px solid var(--border-light); flex-shrink:0; display:none; }
+  .progress-track { width:100%; height:4px; background:#f0f0ee; border-radius:2px; overflow:hidden; }
+  .progress-fill { height:100%; background:var(--accent); border-radius:2px; transition:width .5s linear; }
+  .progress-label { font-size:11px; color:var(--text-muted); text-align:center; margin-top:4px; }
+
+  /* 分析結果ペイン */
+  .topic-card { background:var(--accent-light); border:1px solid #bfdbfe; border-radius:10px; padding:14px 16px; margin-bottom:12px; }
+  .topic-label { font-size:11px; font-weight:600; color:var(--accent); margin-bottom:4px; text-transform:uppercase; letter-spacing:.05em; }
+  .topic-text { font-size:15px; font-weight:700; color:#1e3a8a; line-height:1.4; }
+  .summary-text { font-size:13px; color:var(--text-sec); line-height:1.8; margin-bottom:16px; }
+  .points-list { list-style:none; }
+  .points-list li { display:flex; align-items:flex-start; gap:8px; font-size:13px; color:var(--text); padding:6px 0; line-height:1.5; }
+  .point-dot { width:6px; height:6px; border-radius:50%; background:var(--accent); flex-shrink:0; margin-top:7px; }
+
+  .decision-section { background:var(--green-light); border:1px solid #bbf7d0; border-radius:10px; padding:14px 16px; margin-bottom:12px; }
+  .decision-label { font-size:11px; font-weight:600; color:var(--green); margin-bottom:8px; text-transform:uppercase; letter-spacing:.05em; }
+  .decision-list { list-style:none; } .decision-list li { display:flex; gap:8px; font-size:13px; color:#15803d; padding:4px 0; line-height:1.5; }
+
+  .action-section { background:var(--orange-light); border:1px solid #fed7aa; border-radius:10px; padding:14px 16px; margin-bottom:12px; }
+  .action-label { font-size:11px; font-weight:600; color:var(--orange); margin-bottom:8px; text-transform:uppercase; letter-spacing:.05em; }
+  .action-list { list-style:none; } .action-list li { display:flex; gap:8px; font-size:13px; color:#9a3412; padding:4px 0; line-height:1.5; }
+
+  .history-item { padding:8px 0; border-bottom:1px solid var(--border-light); }
+  .history-item:last-child { border-bottom:none; }
+  .history-time { font-family:var(--mono); font-size:11px; color:var(--text-muted); }
+  .history-summary { font-size:12px; color:var(--text-sec); margin-top:2px; line-height:1.5; }
+  .empty-state { font-size:13px; color:var(--text-muted); padding:8px 0; }
+
+  /* 設定モーダル */
+  .modal-overlay { display:none; position:fixed; inset:0; background:rgba(0,0,0,.3); z-index:1000; justify-content:center; align-items:center; }
+  .modal-overlay.open { display:flex; }
+  .modal { background:var(--surface); border-radius:16px; padding:28px; width:480px; max-width:90vw; box-shadow:0 20px 60px rgba(0,0,0,.15); }
+  .modal h2 { font-size:16px; font-weight:700; margin-bottom:16px; }
+  .modal label { display:block; font-size:13px; font-weight:500; color:var(--text-sec); margin-bottom:6px; }
+  .modal input[type=password], .modal input[type=number] { width:100%; padding:8px 12px; border:1px solid var(--border); border-radius:8px; font-size:13px; font-family:var(--mono); }
+  .modal input:focus { outline:none; border-color:var(--accent); box-shadow:0 0 0 3px rgba(37,99,235,.1); }
+  .modal .field { margin-bottom:16px; }
+  .modal .hint { font-size:11px; color:var(--text-muted); margin-top:4px; }
+  .modal .hint a { color:var(--accent); }
+  .modal .section-title { font-size:12px; font-weight:600; color:var(--text-muted); text-transform:uppercase; letter-spacing:.05em; margin-bottom:12px; margin-top:4px; border-top:1px solid var(--border-light); padding-top:16px; }
+  .modal .actions { display:flex; gap:8px; justify-content:flex-end; margin-top:20px; }
+  .key-status { font-size:12px; padding:4px 8px; border-radius:6px; margin-top:8px; }
+  .key-ok { background:var(--green-light); color:var(--green); }
+  .key-missing { background:var(--yellow-light); color:var(--yellow); }
+
+  @media(max-width:1024px) { .main{grid-template-columns:1fr 1fr} }
+  @media(max-width:768px) { .main{grid-template-columns:1fr; padding:12px 16px} .header,.controls{padding-left:16px;padding-right:16px} }
+</style>
+</head>
+<body>
+
+<div class="header">
+  <div class="header-left">
+    <span class="logo">🧠 セカンドブレーン</span>
+    <span class="phase-badge">WhisperX</span>
+  </div>
+  <div class="header-right">
+    <span id="statusBadge" class="status-badge status-idle">⏸ 停止中</span>
+    <span id="timer" class="timer">00:00</span>
+    <button class="btn-settings" onclick="openSettings()" title="設定">⚙</button>
+  </div>
+</div>
+
+<div class="controls">
+  <button id="btnRec" class="btn btn-rec" onclick="startRecording()">🎤 録音開始</button>
+  <button id="btnStop" class="btn btn-stop" onclick="stopRecording()" style="display:none">⏹ 停止</button>
+  <button id="btnAnalyze" class="btn btn-analyze" onclick="analyzeNow()" disabled>🔍 今すぐ分析</button>
+  <button class="btn btn-outline" onclick="exportMd()">📋 コピー</button>
+  <button class="btn btn-outline" onclick="resetAll()">🗑 リセット</button>
+  <div class="controls-right">
+    <label class="auto-label"><input type="checkbox" id="autoAnalyze" checked> 自動分析（<span id="thresholdLabel">200</span>字ごと）</label>
+  </div>
+</div>
+
+<div id="errorBar" class="error-bar">
+  <span id="errorText"></span>
+  <button onclick="hideError()">✕</button>
+</div>
+
+<div class="main">
+  <!-- 左ペイン: 文字起こし -->
+  <div class="card">
+    <div class="card-header">
+      <span class="card-title">📝 文字起こし</span>
+      <span id="charCount" class="card-meta">0文字</span>
+    </div>
+    <div class="card-body" id="transcriptBody" style="max-height:calc(100vh - 240px)">
+      <div id="transcriptContent" class="transcript-empty">
+        <div>
+          <div class="transcript-empty-icon">🎤</div>
+          <p>録音を開始してください</p>
+          <p class="sub">WhisperXがチャンクごとに文字起こし＋話者分離します</p>
+        </div>
+      </div>
+    </div>
+    <div id="progressWrap" class="progress-bar-wrap">
+      <div class="progress-track"><div id="progressFill" class="progress-fill" style="width:0%"></div></div>
+      <div id="progressLabel" class="progress-label">次の文字起こしまで --秒</div>
+    </div>
+  </div>
+
+  <!-- 中央ペイン: 分析結果 -->
+  <div class="card">
+    <div class="card-header">
+      <span class="card-title">🔍 分析結果</span>
+      <span id="analysisCount" class="card-meta">0回分析</span>
+    </div>
+    <div class="card-body" style="max-height:calc(100vh - 240px)">
+      <div class="topic-card">
+        <div class="topic-label">📢 現在の議題</div>
+        <div id="currentTopic" class="topic-text">（録音開始後に自動検出）</div>
+      </div>
+      <div><div class="card-title" style="margin-bottom:6px">📄 要約</div>
+        <div id="summaryText" class="summary-text">分析結果がここに表示されます</div>
+      </div>
+      <div><div class="card-title" style="margin-bottom:8px">💡 論点</div>
+        <ul id="keyPoints" class="points-list"><li class="empty-state">（検出された論点がここに表示されます）</li></ul>
+      </div>
+    </div>
+  </div>
+
+  <!-- 右ペイン: 決定・アクション -->
+  <div class="card">
+    <div class="card-header"><span class="card-title">📌 決定・アクション</span></div>
+    <div class="card-body" style="max-height:calc(100vh - 240px)">
+      <div class="decision-section">
+        <div class="decision-label">📌 決定事項</div>
+        <ul id="decisions" class="decision-list"><li class="empty-state">（決定事項が検出されると表示）</li></ul>
+      </div>
+      <div class="action-section">
+        <div class="action-label">☑ アクションアイテム</div>
+        <ul id="actionItems" class="action-list"><li class="empty-state">（アクションが検出されると表示）</li></ul>
+      </div>
+      <div><div class="card-title" style="margin-bottom:8px">🕐 分析履歴</div>
+        <div id="analysisHistory"><div class="empty-state">分析結果の履歴がここに蓄積されます</div></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- 設定モーダル -->
+<div id="settingsModal" class="modal-overlay" onclick="if(event.target===this)closeSettings()">
+  <div class="modal">
+    <h2>⚙ 設定</h2>
+
+    <div class="field">
+      <label>Anthropic API キー</label>
+      <input type="password" id="apiKeyInput" placeholder="sk-ant-api03-...">
+      <div class="hint">APIキーはlocalStorageに保存されます（サーバー経由でのみ使用）</div>
+      <div id="keyStatus"></div>
+    </div>
+
+    <div class="field">
+      <label>Claude 分析閾値（文字数）</label>
+      <input type="number" id="thresholdInput" value="200" min="50" max="2000" step="50">
+      <div class="hint">この文字数ごとにClaudeで自動分析します（50〜2000）</div>
+    </div>
+
+    <div class="section-title">WhisperX 設定</div>
+
+    <div class="field">
+      <label>HuggingFace Token（話者分離に必要）</label>
+      <input type="password" id="hfTokenInput" placeholder="hf_xxxxxxxxxxxx">
+      <div class="hint">
+        未設定でも文字起こしのみ動作します。話者分離を有効にするには
+        <a href="https://huggingface.co/pyannote/speaker-diarization-3.1" target="_blank">こちら</a>
+        でトークンを取得してください。
+      </div>
+      <div id="hfStatus"></div>
+    </div>
+
+    <div class="field">
+      <label>チャンク間隔（秒）</label>
+      <input type="number" id="chunkSecondsInput" value="15" min="5" max="60" step="5">
+      <div class="hint">この秒数ごとに音声をWhisperXへ送信します（5〜60秒）。長いほど精度↑・遅延↑</div>
+    </div>
+
+    <div class="actions">
+      <button class="btn btn-outline" onclick="closeSettings()">キャンセル</button>
+      <button class="btn btn-analyze" onclick="saveSettings()">保存</button>
+    </div>
+  </div>
+</div>
+
+<script>
+// ============================================================
+// State
+// ============================================================
+let isRecording = false, isAnalyzing = false, isTranscribing = false;
+let mediaRecorder = null, audioChunks = [], chunkTimer = null;
+let chunkStartTime = null;   // チャンク開始時刻（進行バー用）
+let transcript = "", pendingText = "", charsSinceAnalysis = 0;
+let startTime = null, timerInterval = null, chunkProgressInterval = null, analysisCount = 0;
+let THRESHOLD = parseInt(localStorage.getItem("sb_threshold") || "200");
+let CHUNK_SECONDS = parseInt(localStorage.getItem("sb_chunk_seconds") || "15");
+let merged = { current_topic:"", key_points:[], decisions:[], action_items:[], summary:"", speaker_segments:[] };
+let historyLog = [];
+
+// 話者ID正規化（SPEAKER_00 → 話者A）
+const speakerMap = {};
+const SPEAKER_LABELS  = ["話者A","話者B","話者C","話者D","話者E","話者F"];
+const SPEAKER_CLASSES = ["speaker-a","speaker-b","speaker-c","speaker-d","speaker-e","speaker-unknown"];
+
+function normalizeSpeaker(raw) {
+  if (!speakerMap[raw]) {
+    const idx = Object.keys(speakerMap).length;
+    speakerMap[raw] = {
+      label: SPEAKER_LABELS[idx]  || `話者${idx+1}`,
+      cls:   SPEAKER_CLASSES[idx] || "speaker-unknown"
+    };
+  }
+  return speakerMap[raw];
+}
+
+// Claude 分析プロンプト
+const SYSTEM_PROMPT = `あなたは会議・講義のリアルタイム分析アシスタントです。
+与えられた文字起こしテキストから以下を抽出してJSON形式で返してください。
+
+{
+  "current_topic": "現在の議題・テーマ（1行）",
+  "key_points": ["論点1", "論点2"],
+  "decisions": ["決定事項1"],
+  "action_items": ["アクションアイテム1"],
+  "summary": "直近の内容の要約（2-3文）"
+}
+
+ルール:
+- JSONのみ返す。説明文やバッククォートは不要
+- 日本語で回答
+- key_pointsは重要な論点のみ（最大5個）
+- decisionsは明確に決定された事項のみ
+- action_itemsは「誰が何をいつまでに」が明確なもののみ
+- 情報が不足している場合は空配列
+- current_topicが不明なら「（分析中）」`;
+
+// ============================================================
+// 設定
+// ============================================================
+function openSettings() {
+  document.getElementById("apiKeyInput").value   = localStorage.getItem("sb_api_key") || "";
+  document.getElementById("hfTokenInput").value  = localStorage.getItem("sb_hf_token") || "";
+  document.getElementById("thresholdInput").value    = THRESHOLD;
+  document.getElementById("chunkSecondsInput").value = CHUNK_SECONDS;
+  updateKeyStatus();
+  document.getElementById("settingsModal").classList.add("open");
+}
+function closeSettings() { document.getElementById("settingsModal").classList.remove("open"); }
+function saveSettings() {
+  const key  = document.getElementById("apiKeyInput").value.trim();
+  const hft  = document.getElementById("hfTokenInput").value.trim();
+  const thr  = Math.max(50,  Math.min(2000, parseInt(document.getElementById("thresholdInput").value)    || 200));
+  const chnk = Math.max(5,   Math.min(60,   parseInt(document.getElementById("chunkSecondsInput").value) || 15));
+  if (key)  localStorage.setItem("sb_api_key",  key);  else localStorage.removeItem("sb_api_key");
+  if (hft)  localStorage.setItem("sb_hf_token", hft);  else localStorage.removeItem("sb_hf_token");
+  localStorage.setItem("sb_threshold",      thr);
+  localStorage.setItem("sb_chunk_seconds",  chnk);
+  THRESHOLD     = thr;
+  CHUNK_SECONDS = chnk;
+  document.getElementById("thresholdLabel").textContent = thr;
+  closeSettings(); hideError();
+}
+function updateKeyStatus() {
+  const el  = document.getElementById("keyStatus");
+  const hel = document.getElementById("hfStatus");
+  if (localStorage.getItem("sb_api_key")) {
+    el.className="key-status key-ok"; el.textContent="✅ APIキー設定済み";
+  } else {
+    el.className="key-status key-missing"; el.textContent="⚠ APIキー未設定（分析機能に必要）";
+  }
+  if (localStorage.getItem("sb_hf_token")) {
+    hel.className="key-status key-ok"; hel.textContent="✅ HFトークン設定済み（話者分離が有効）";
+  } else {
+    hel.className="key-status key-missing"; hel.textContent="⚠ 未設定（文字起こしのみ・話者分離なし）";
+  }
+}
+
+// ============================================================
+// UI ヘルパー
+// ============================================================
+const esc = s => s.replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;");
+function showError(m) { document.getElementById("errorText").textContent=m; document.getElementById("errorBar").style.display="flex"; }
+function hideError()  { document.getElementById("errorBar").style.display="none"; }
+
+function setStatus(s) {
+  const b = document.getElementById("statusBadge");
+  if      (s==="rec")          { b.className="status-badge status-rec";          b.innerHTML='<span class="pulse-dot"></span> REC'; }
+  else if (s==="transcribing") { b.className="status-badge status-transcribing"; b.textContent="⟳ 文字起こし中"; }
+  else if (s==="analyzing")    { b.className="status-badge status-analyzing";    b.textContent="⚡ 分析中"; }
+  else                          { b.className="status-badge status-idle";         b.textContent="⏸ 停止中"; }
+}
+
+function updateTimer() {
+  if (!startTime) return;
+  const e = Math.floor((Date.now()-startTime)/1000);
+  document.getElementById("timer").textContent =
+    String(Math.floor(e/60)).padStart(2,"0")+":"+String(e%60).padStart(2,"0");
+}
+
+// 文字起こし表示（話者セグメントがあればカラーラベル付き、なければ rawテキスト）
+function updateTranscript() {
+  const el   = document.getElementById("transcriptContent");
+  const body = document.getElementById("transcriptBody");
+
+  if (!transcript && !isTranscribing) return;
+
+  let h = "";
+  if (merged.speaker_segments.length > 0) {
+    // 話者ラベル付き表示
+    h = merged.speaker_segments.map(seg => {
+      const sp = normalizeSpeaker(seg.speaker);
+      return `<div class="speaker-segment ${sp.cls}">
+        <span class="speaker-label">${esc(sp.label)}</span>
+        <span class="speaker-text">${esc(seg.text)}</span>
+      </div>`;
+    }).join("");
+    // 分析済み以降の pending テキストを薄く表示
+    if (pendingText.trim()) {
+      h += `<div class="transcript-pending-block">
+        <div class="transcript-pending-label">未分析の新しい発言</div>
+        <div class="transcript-pending-text">${esc(pendingText.trim())}</div>
+      </div>`;
+    }
+  } else if (transcript) {
+    // 話者分離なし: raw テキスト表示
+    h = transcript.split("\n").filter(Boolean)
+      .map(l=>`<div class="transcript-line">${esc(l)}</div>`).join("");
+  }
+
+  // 文字起こし処理中インジケータ
+  if (isTranscribing) {
+    h += `<div class="processing-indicator"><span class="spin">⟳</span> WhisperXで文字起こし中...</div>`;
+  }
+
+  el.innerHTML = h;
+  el.className = "";
+  document.getElementById("charCount").textContent = transcript.length + "文字";
+  body.scrollTop = body.scrollHeight;
+}
+
+// チャンク進行バー（時間ベース）
+function startChunkProgress() {
+  chunkStartTime = Date.now();
+  document.getElementById("progressWrap").style.display = "block";
+  chunkProgressInterval = setInterval(() => {
+    const elapsed = (Date.now() - chunkStartTime) / 1000;
+    const pct = Math.min(100, (elapsed / CHUNK_SECONDS) * 100);
+    const remain = Math.max(0, CHUNK_SECONDS - Math.floor(elapsed));
+    document.getElementById("progressFill").style.width = pct + "%";
+    document.getElementById("progressLabel").textContent = `次の文字起こしまで ${remain}秒`;
+  }, 500);
+}
+function stopChunkProgress() {
+  clearInterval(chunkProgressInterval);
+  chunkProgressInterval = null;
+  document.getElementById("progressFill").style.width = "0%";
+  document.getElementById("progressLabel").textContent = "文字起こし中...";
+}
+
+function updateAnalysisUI() {
+  document.getElementById("currentTopic").textContent = merged.current_topic || "（分析中）";
+  document.getElementById("summaryText").textContent  = merged.summary       || "分析結果がここに表示されます";
+  document.getElementById("analysisCount").textContent = analysisCount + "回分析";
+  const kp = document.getElementById("keyPoints");
+  if (merged.key_points.length)
+    kp.innerHTML = merged.key_points.map(p=>`<li><span class="point-dot"></span><span>${esc(p)}</span></li>`).join("");
+  const d = document.getElementById("decisions");
+  if (merged.decisions.length)
+    d.innerHTML = merged.decisions.map(x=>`<li>✅ <span>${esc(x)}</span></li>`).join("");
+  const a = document.getElementById("actionItems");
+  if (merged.action_items.length)
+    a.innerHTML = merged.action_items.map(x=>`<li>→ <span>${esc(x)}</span></li>`).join("");
+  const hist = document.getElementById("analysisHistory");
+  if (historyLog.length)
+    hist.innerHTML = [...historyLog].reverse().map(h=>
+      `<div class="history-item"><span class="history-time">${h.ts}</span><div class="history-summary">${esc(h.summary)}</div></div>`
+    ).join("");
+}
+
+// ============================================================
+// 録音（MediaRecorder）
+// ============================================================
+async function startRecording() {
+  if (!localStorage.getItem("sb_api_key")) {
+    showError("APIキーが未設定です。右上の ⚙ ボタンから設定してください。");
+    openSettings(); return;
+  }
+
+  let stream;
+  try {
+    stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+  } catch(e) {
+    showError("マイクのアクセスに失敗しました: " + e.message); return;
+  }
+
+  // mimeType: Chromeは audio/webm;codecs=opus が標準
+  const mimeType = MediaRecorder.isTypeSupported("audio/webm;codecs=opus")
+    ? "audio/webm;codecs=opus" : "audio/webm";
+  mediaRecorder = new MediaRecorder(stream, { mimeType });
+
+  mediaRecorder.ondataavailable = e => { if (e.data.size > 0) audioChunks.push(e.data); };
+
+  mediaRecorder.start(500);   // 500ms ごとにデータ収集
+  isRecording = true;
+  startTime = Date.now();
+  timerInterval = setInterval(updateTimer, 1000);
+
+  // チャンク送信タイマー
+  chunkTimer = setInterval(sendChunk, CHUNK_SECONDS * 1000);
+  startChunkProgress();
+
+  hideError(); setStatus("rec");
+  document.getElementById("btnRec").style.display  = "none";
+  document.getElementById("btnStop").style.display = "";
+  if (!transcript) {
+    document.getElementById("transcriptContent").innerHTML = "";
+    document.getElementById("transcriptContent").className = "";
+  }
+}
+
+function stopRecording() {
+  isRecording = false;
+  clearInterval(chunkTimer);
+  clearInterval(timerInterval);
+  stopChunkProgress();
+
+  if (mediaRecorder && mediaRecorder.state !== "inactive") {
+    mediaRecorder.onstop = () => sendChunk();   // 最後のチャンクを送信
+    mediaRecorder.stop();
+    mediaRecorder.stream.getTracks().forEach(t => t.stop());
+  }
+  mediaRecorder = null;
+
+  setStatus("idle");
+  document.getElementById("btnRec").style.display  = "";
+  document.getElementById("btnStop").style.display = "none";
+  document.getElementById("progressWrap").style.display = "none";
+}
+
+// ============================================================
+// チャンク送信 → WhisperX 文字起こし
+// ============================================================
+async function sendChunk() {
+  if (audioChunks.length === 0) return;
+
+  const blob = new Blob(audioChunks, { type: "audio/webm" });
+  audioChunks = [];
+
+  // チャンク進行バーをリセット
+  stopChunkProgress();
+  isTranscribing = true;
+  setStatus("transcribing");
+  updateTranscript();   // "文字起こし中..." インジケータ表示
+
+  try {
+    const hfToken = localStorage.getItem("sb_hf_token") || "";
+    const resp = await fetch("/api/transcribe", {
+      method: "POST",
+      headers: {
+        "Content-Type": "audio/webm",
+        "X-HF-Token": hfToken
+      },
+      body: blob
+    });
+
+    const data = await resp.json();
+    if (data.error) {
+      showError("文字起こしエラー: " + data.error);
+      return;
+    }
+    if (data.segments && data.segments.length > 0) {
+      processSegments(data.segments);
+    }
+  } catch(e) {
+    showError("文字起こし失敗: " + e.message);
+  } finally {
+    isTranscribing = false;
+    setStatus(isRecording ? "rec" : "idle");
+    // 次のチャンクが始まっていれば進行バー再開
+    if (isRecording) startChunkProgress();
+    updateTranscript();
+  }
+}
+
+// ============================================================
+// セグメント処理（WhisperX → 表示・分析トリガー）
+// ============================================================
+function processSegments(segments) {
+  for (const seg of segments) {
+    const text = (seg.text || "").trim();
+    if (!text) continue;
+
+    const sp = normalizeSpeaker(seg.speaker || "SPEAKER_00");
+
+    // transcript（全文）と pendingText（未分析分）に追記
+    transcript   += (transcript   ? "\n" : "") + `[${sp.label}] ${text}`;
+    pendingText  += (pendingText  ? " "  : "")  + text;
+    charsSinceAnalysis += text.length;
+
+    // 話者セグメント蓄積（連続同一話者はマージ）
+    const last = merged.speaker_segments[merged.speaker_segments.length - 1];
+    if (last && last.speaker === seg.speaker) {
+      last.text += "　" + text;
+    } else {
+      merged.speaker_segments.push({ speaker: seg.speaker, text });
+    }
+  }
+
+  document.getElementById("btnAnalyze").disabled = false;
+  updateTranscript();
+
+  // 自動分析トリガー
+  if (document.getElementById("autoAnalyze").checked &&
+      charsSinceAnalysis >= THRESHOLD && !isAnalyzing) {
+    analyzeNow();
+  }
+}
+
+// ============================================================
+// Claude 分析
+// ============================================================
+async function analyzeNow() {
+  const toAnalyze = pendingText.trim() || transcript.trim();
+  if (!toAnalyze || isAnalyzing) return;
+
+  const apiKey = localStorage.getItem("sb_api_key");
+  if (!apiKey) { showError("APIキーが未設定です。⚙ から設定してください。"); return; }
+
+  isAnalyzing = true;
+  charsSinceAnalysis = 0;
+  setStatus("analyzing");
+
+  // 既存の話者リストをコンテキストとして渡し、ラベルを一貫させる
+  const knownSpeakers = [...new Set(merged.speaker_segments.map(s => {
+    const sp = speakerMap[s.speaker];
+    return sp ? sp.label : s.speaker;
+  }))];
+  const speakerCtx = knownSpeakers.length > 0
+    ? `\n前回の話者識別（参考）: ${knownSpeakers.join(", ")} が登場済み`
+    : "";
+
+  const userMsg = pendingText.trim()
+    ? `【全体のコンテキスト】\n${transcript.trim()}\n\n【直近の新しい発言】\n${pendingText.trim()}${speakerCtx}\n\n直近の発言を重視しつつ、全体の文脈を踏まえて分析してください。`
+    : `以下の文字起こしを分析してください：\n\n${toAnalyze}`;
+
+  try {
+    const resp = await fetch("/api/analyze", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        api_key: apiKey,
+        model: "claude-sonnet-4-20250514",
+        max_tokens: 1000,
+        system: SYSTEM_PROMPT,
+        messages: [{ role: "user", content: userMsg }]
+      })
+    });
+
+    const data = await resp.json();
+    if (data.error) { showError(data.error); return; }
+
+    const raw     = (data.content||[]).map(c=>c.text||"").join("");
+    const cleaned = raw.replace(/```json\s*|```/g, "").trim();
+    const parsed  = JSON.parse(cleaned);
+
+    merged.current_topic  = parsed.current_topic || merged.current_topic;
+    merged.summary        = parsed.summary       || merged.summary;
+    merged.key_points     = [...new Set([...merged.key_points, ...(parsed.key_points||[])])].slice(-8);
+    merged.decisions      = [...new Set([...merged.decisions,  ...(parsed.decisions ||[])])];
+    merged.action_items   = [...new Set([...merged.action_items,...(parsed.action_items||[])])];
+
+    analysisCount++;
+    historyLog.push({ ts: new Date().toLocaleTimeString(), summary: parsed.summary||"(要約なし)" });
+    pendingText = "";
+    updateAnalysisUI();
+
+  } catch(e) {
+    showError("分析エラー: " + e.message);
+  } finally {
+    isAnalyzing = false;
+    setStatus(isRecording ? "rec" : "idle");
+  }
+}
+
+// ============================================================
+// エクスポート（Markdown）
+// ============================================================
+function exportMd() {
+  if (!merged.current_topic && !transcript) { showError("データがありません"); return; }
+
+  // 話者別文字起こしセクション
+  let speakerSection = "";
+  if (merged.speaker_segments.length > 0) {
+    speakerSection = "\n\n## 話者別文字起こし\n" +
+      merged.speaker_segments.map(seg => {
+        const sp = speakerMap[seg.speaker];
+        const label = sp ? sp.label : seg.speaker;
+        return `**${label}**: ${seg.text}`;
+      }).join("\n");
+  }
+
+  const md = `# 会議メモ - ${new Date().toLocaleDateString("ja-JP")}
+
+## 議題
+${merged.current_topic||"（未検出）"}
+
+## 要約
+${merged.summary||"（未分析）"}
+
+## 論点
+${merged.key_points.length ? merged.key_points.map(p=>"- "+p).join("\n") : "（なし）"}
+
+## 決定事項
+${merged.decisions.length ? merged.decisions.map(d=>"- "+d).join("\n") : "（なし）"}
+
+## アクションアイテム
+${merged.action_items.length ? merged.action_items.map(a=>"- "+a).join("\n") : "（なし）"}
+${speakerSection}
+
+---
+## 文字起こし全文
+${transcript||"（なし）"}`;
+
+  navigator.clipboard.writeText(md).then(()=>{
+    const b = event.target; const o = b.textContent;
+    b.textContent="✅ コピー完了"; setTimeout(()=>b.textContent=o, 2000);
+  });
+}
+
+// ============================================================
+// リセット
+// ============================================================
+function resetAll() {
+  stopRecording();
+  transcript=""; pendingText=""; charsSinceAnalysis=0; startTime=null; analysisCount=0;
+  merged = { current_topic:"", key_points:[], decisions:[], action_items:[], summary:"", speaker_segments:[] };
+  historyLog = [];
+  // 話者マップをクリア
+  Object.keys(speakerMap).forEach(k => delete speakerMap[k]);
+
+  document.getElementById("timer").textContent    = "00:00";
+  document.getElementById("charCount").textContent = "0文字";
+  document.getElementById("analysisCount").textContent = "0回分析";
+  document.getElementById("btnAnalyze").disabled  = true;
+  document.getElementById("progressWrap").style.display = "none";
+  document.getElementById("transcriptContent").innerHTML =
+    `<div class="transcript-empty"><div>
+      <div class="transcript-empty-icon">🎤</div>
+      <p>録音を開始してください</p>
+      <p class="sub">WhisperXがチャンクごとに文字起こし＋話者分離します</p>
+    </div></div>`;
+  document.getElementById("transcriptContent").className = "transcript-empty";
+  document.getElementById("currentTopic").textContent = "（録音開始後に自動検出）";
+  document.getElementById("summaryText").textContent  = "分析結果がここに表示されます";
+  document.getElementById("keyPoints").innerHTML      = '<li class="empty-state">（検出された論点がここに表示されます）</li>';
+  document.getElementById("decisions").innerHTML      = '<li class="empty-state">（決定事項が検出されると表示）</li>';
+  document.getElementById("actionItems").innerHTML    = '<li class="empty-state">（アクションが検出されると表示）</li>';
+  document.getElementById("analysisHistory").innerHTML= '<div class="empty-state">分析結果の履歴がここに蓄積されます</div>';
+  hideError();
+}
+
+// Init
+document.getElementById("thresholdLabel").textContent = THRESHOLD;
+</script>
+</body>
+</html>
