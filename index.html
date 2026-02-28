@@ -250,11 +250,20 @@
       <label>HuggingFace Token（話者分離に必要）</label>
       <input type="password" id="hfTokenInput" placeholder="hf_xxxxxxxxxxxx">
       <div class="hint">
-        未設定でも文字起こしのみ動作します。話者分離を有効にするには
-        <a href="https://huggingface.co/pyannote/speaker-diarization-3.1" target="_blank">こちら</a>
-        でトークンを取得してください。
+        未設定でも文字起こしのみ動作します。話者分離を有効にするには下記モデルの利用規約に同意してトークンを取得してください。
       </div>
       <div id="hfStatus"></div>
+    </div>
+
+    <div class="field">
+      <label>Pyannote モデル</label>
+      <input type="text" id="diarizeModelInput" placeholder="pyannote/speaker-diarization-3.1">
+      <div class="hint">
+        利用規約への同意が必要です →
+        <a href="https://huggingface.co/pyannote/speaker-diarization-3.1" target="_blank">speaker-diarization-3.1</a>（推奨）
+        または
+        <a href="https://huggingface.co/pyannote/speaker-diarization-community-1" target="_blank">community-1</a>（新）
+      </div>
     </div>
 
     <div class="field">
@@ -325,21 +334,24 @@ const SYSTEM_PROMPT = `あなたは会議・講義のリアルタイム分析ア
 // 設定
 // ============================================================
 function openSettings() {
-  document.getElementById("apiKeyInput").value   = localStorage.getItem("sb_api_key") || "";
-  document.getElementById("hfTokenInput").value  = localStorage.getItem("sb_hf_token") || "";
-  document.getElementById("thresholdInput").value    = THRESHOLD;
-  document.getElementById("chunkSecondsInput").value = CHUNK_SECONDS;
+  document.getElementById("apiKeyInput").value        = localStorage.getItem("sb_api_key") || "";
+  document.getElementById("hfTokenInput").value       = localStorage.getItem("sb_hf_token") || "";
+  document.getElementById("diarizeModelInput").value  = localStorage.getItem("sb_diarize_model") || "";
+  document.getElementById("thresholdInput").value     = THRESHOLD;
+  document.getElementById("chunkSecondsInput").value  = CHUNK_SECONDS;
   updateKeyStatus();
   document.getElementById("settingsModal").classList.add("open");
 }
 function closeSettings() { document.getElementById("settingsModal").classList.remove("open"); }
 function saveSettings() {
-  const key  = document.getElementById("apiKeyInput").value.trim();
-  const hft  = document.getElementById("hfTokenInput").value.trim();
-  const thr  = Math.max(50,  Math.min(2000, parseInt(document.getElementById("thresholdInput").value)    || 200));
-  const chnk = Math.max(5,   Math.min(60,   parseInt(document.getElementById("chunkSecondsInput").value) || 15));
-  if (key)  localStorage.setItem("sb_api_key",  key);  else localStorage.removeItem("sb_api_key");
-  if (hft)  localStorage.setItem("sb_hf_token", hft);  else localStorage.removeItem("sb_hf_token");
+  const key   = document.getElementById("apiKeyInput").value.trim();
+  const hft   = document.getElementById("hfTokenInput").value.trim();
+  const model = document.getElementById("diarizeModelInput").value.trim();
+  const thr   = Math.max(50,  Math.min(2000, parseInt(document.getElementById("thresholdInput").value)    || 200));
+  const chnk  = Math.max(5,   Math.min(60,   parseInt(document.getElementById("chunkSecondsInput").value) || 15));
+  if (key)   localStorage.setItem("sb_api_key",       key);   else localStorage.removeItem("sb_api_key");
+  if (hft)   localStorage.setItem("sb_hf_token",      hft);   else localStorage.removeItem("sb_hf_token");
+  if (model) localStorage.setItem("sb_diarize_model", model); else localStorage.removeItem("sb_diarize_model");
   localStorage.setItem("sb_threshold",      thr);
   localStorage.setItem("sb_chunk_seconds",  chnk);
   THRESHOLD     = thr;
@@ -540,12 +552,14 @@ async function sendChunk() {
   updateTranscript();   // "文字起こし中..." インジケータ表示
 
   try {
-    const hfToken = localStorage.getItem("sb_hf_token") || "";
+    const hfToken      = localStorage.getItem("sb_hf_token")      || "";
+    const diarizeModel = localStorage.getItem("sb_diarize_model") || "";
     const resp = await fetch("/api/transcribe", {
       method: "POST",
       headers: {
-        "Content-Type": "audio/webm",
-        "X-HF-Token": hfToken
+        "Content-Type":    "audio/webm",
+        "X-HF-Token":      hfToken,
+        "X-Diarize-Model": diarizeModel
       },
       body: blob
     });

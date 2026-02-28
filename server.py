@@ -52,22 +52,23 @@ def _get_whisper():
     return _whisper_model
 
 
-def _get_diarize(hf_token):
+def _get_diarize(hf_token, model_name=None):
     """話者分離モデルを取得（HFトークンが必要・初回のみロード）"""
     global _diarize_model
     if not hf_token:
         return None
     if _diarize_model is None:
         from whisperx.diarize import DiarizationPipeline
-        print("  [WhisperX] 話者分離モデルを読み込み中...", flush=True)
+        target = model_name or "pyannote/speaker-diarization-3.1"
+        print(f"  [WhisperX] 話者分離モデルを読み込み中: {target}", flush=True)
         _diarize_model = DiarizationPipeline(
-            token=hf_token, device=DEVICE
+            model_name=target, token=hf_token, device=DEVICE
         )
         print("  [WhisperX] 話者分離モデル完了", flush=True)
     return _diarize_model
 
 
-def transcribe_audio(audio_path, hf_token=""):
+def transcribe_audio(audio_path, hf_token="", diarize_model_name=None):
     """
     音声ファイルを文字起こし＋話者分離して返す。
     Returns: list of {"speaker": "SPEAKER_00", "text": "..."}
@@ -76,7 +77,7 @@ def transcribe_audio(audio_path, hf_token=""):
 
     with _model_lock:
         whisper_model = _get_whisper()
-        diarize_model = _get_diarize(hf_token)
+        diarize_model = _get_diarize(hf_token, diarize_model_name)
 
     audio = whisperx.load_audio(audio_path)
     result = whisper_model.transcribe(audio, batch_size=4)
@@ -125,6 +126,7 @@ class SecondBrainHandler(http.server.SimpleHTTPRequestHandler):
         try:
             length = int(self.headers.get("Content-Length", 0))
             hf_token = self.headers.get("X-HF-Token", "").strip()
+            diarize_model_name = self.headers.get("X-Diarize-Model", "").strip() or None
             audio_bytes = self.rfile.read(length)
 
             # 音声をテンポラリファイルに保存（WebM形式）
@@ -133,7 +135,7 @@ class SecondBrainHandler(http.server.SimpleHTTPRequestHandler):
                 tmp_path = f.name
 
             try:
-                segments = transcribe_audio(tmp_path, hf_token)
+                segments = transcribe_audio(tmp_path, hf_token, diarize_model_name)
                 self._json_response(200, {"segments": segments})
             finally:
                 try:
@@ -197,7 +199,7 @@ class SecondBrainHandler(http.server.SimpleHTTPRequestHandler):
         self.send_response(204)
         self.send_header("Access-Control-Allow-Origin", "*")
         self.send_header("Access-Control-Allow-Methods", "POST, OPTIONS")
-        self.send_header("Access-Control-Allow-Headers", "Content-Type, X-HF-Token")
+        self.send_header("Access-Control-Allow-Headers", "Content-Type, X-HF-Token, X-Diarize-Model")
         self.end_headers()
 
     def log_message(self, format, *args):
