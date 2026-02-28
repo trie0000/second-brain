@@ -58,10 +58,10 @@ def _get_diarize(hf_token):
     if not hf_token:
         return None
     if _diarize_model is None:
-        import whisperx
+        from whisperx.diarize import DiarizationPipeline
         print("  [WhisperX] 話者分離モデルを読み込み中...", flush=True)
-        _diarize_model = whisperx.DiarizationPipeline(
-            use_auth_token=hf_token, device=DEVICE
+        _diarize_model = DiarizationPipeline(
+            token=hf_token, device=DEVICE
         )
         print("  [WhisperX] 話者分離モデル完了", flush=True)
     return _diarize_model
