@@ -201,8 +201,9 @@ class SecondBrainHandler(http.server.SimpleHTTPRequestHandler):
         self.end_headers()
 
     def log_message(self, format, *args):
-        if "/api/" in (args[0] if args else ""):
-            sys.stderr.write(f"  API: {args[0]}\n")
+        first = str(args[0]) if args else ""
+        if "/api/" in first:
+            sys.stderr.write(f"  API: {first}\n")
 
 
 def main():
