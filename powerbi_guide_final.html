@@ -1,0 +1,679 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<title>Power BI Desktop 作成ガイド</title>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;500;700&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+<style>
+:root {
+  /* Power BI の実際の配色に合わせる */
+  --pbi-blue:   #0078D4;
+  --pbi-title:  #2B7CD3;
+  --pbi-bg:     #F3F2F1;
+  --pbi-white:  #FFFFFF;
+  --pbi-border: #D2D0CE;
+  --pbi-hover:  #EDEBE9;
+  --pbi-text:   #252423;
+  --pbi-sub:    #605E5C;
+  --pbi-light:  #A19F9D;
+
+  --vuln:  #C50F1F;
+  --port:  #8A3707;
+  --adm:   #0F548C;
+  --open:  #835B00;
+  --close: #107C10;
+  --mono:  'JetBrains Mono', monospace;
+  --sans:  'Noto Sans JP', sans-serif;
+}
+*,*::before,*::after { box-sizing:border-box; margin:0; padding:0; }
+body { background:var(--pbi-bg); color:var(--pbi-text); font-family:var(--sans); font-size:13px; display:flex; min-height:100vh; }
+
+/* ── NAV ── */
+.nav {
+  width:220px; flex-shrink:0;
+  background:var(--pbi-white); border-right:1px solid var(--pbi-border);
+  display:flex; flex-direction:column;
+  position:sticky; top:0; height:100vh; overflow-y:auto;
+}
+.nav-logo {
+  background:var(--pbi-title); padding:14px 16px;
+  display:flex; align-items:center; gap:9px;
+}
+.nav-logo-icon { font-size:18px; }
+.nav-logo-text { color:white; font-size:13px; font-weight:700; line-height:1.4; }
+.nav-logo-sub { font-size:9px; color:#BDD7F5; font-family:var(--mono); margin-top:1px; }
+
+/* モックアップ参照プレビュー */
+.nav-preview {
+  padding:10px 12px; border-bottom:1px solid var(--pbi-border);
+  background:#FAFAF9;
+}
+.np-label { font-size:9px; color:var(--pbi-light); font-family:var(--mono); text-transform:uppercase; letter-spacing:.8px; margin-bottom:6px; }
+.np-screen {
+  border:1px solid var(--pbi-border); border-radius:3px; overflow:hidden;
+  background:white; font-size:9px;
+}
+.np-titlebar { background:var(--pbi-title); color:white; padding:3px 6px; font-size:8px; }
+.np-ribbon { background:var(--pbi-hover); padding:3px 6px; border-bottom:1px solid var(--pbi-border); font-size:8px; color:var(--pbi-sub); }
+.np-body { display:flex; min-height:60px; }
+.np-left { width:30px; background:#FAFAF9; border-right:1px solid var(--pbi-border); }
+.np-canvas { flex:1; padding:4px; display:flex; flex-direction:column; gap:3px; }
+.np-comment { height:8px; background:#E8F4FD; border:1px solid #C7E0F4; border-radius:1px; }
+.np-bar { background:var(--pbi-hover); border-radius:1px; }
+.np-right { width:32px; background:#FAFAF9; border-left:1px solid var(--pbi-border); }
+.np-tabs { background:white; border-top:1px solid var(--pbi-border); padding:2px 4px; display:flex; gap:3px; }
+.np-tab { font-size:7px; color:var(--pbi-sub); padding:1px 3px; border-top:1.5px solid transparent; }
+.np-tab.active { color:var(--pbi-blue); border-top-color:var(--pbi-blue); font-weight:700; }
+
+.nav-section {
+  padding:10px 16px 4px;
+  font-size:9px; color:var(--pbi-light); font-family:var(--mono);
+  text-transform:uppercase; letter-spacing:1px; background:#FAFAF9;
+}
+.nav-item {
+  display:flex; align-items:center; gap:8px;
+  padding:8px 16px; font-size:12px; color:var(--pbi-sub);
+  cursor:pointer; border-left:2px solid transparent; transition:.15s;
+}
+.nav-item:hover, .nav-item.active { color:var(--pbi-text); background:var(--pbi-hover); border-left-color:var(--pbi-blue); }
+.nav-num { font-size:9px; font-family:var(--mono); color:var(--pbi-light); margin-left:auto; }
+.nav-dot { width:7px; height:7px; border-radius:2px; flex-shrink:0; }
+
+/* ── MAIN ── */
+.main { flex:1; overflow-y:auto; padding:28px 32px; max-width:880px; }
+.page { display:none; } .page.active { display:block; }
+
+.page-title {
+  font-size:20px; font-weight:700; margin-bottom:4px; color:var(--pbi-text);
+  display:flex; align-items:center; gap:10px;
+}
+.page-title-badge {
+  font-size:10px; font-weight:400; font-family:var(--mono);
+  background:var(--pbi-hover); border:1px solid var(--pbi-border);
+  padding:2px 10px; border-radius:20px; color:var(--pbi-sub);
+}
+.page-sub { font-size:12px; color:var(--pbi-sub); line-height:1.7; margin-bottom:20px; }
+
+/* ── UI CALLOUT（モックアップの該当箇所を指示） ── */
+.ui-callout {
+  background:white; border:1px solid var(--pbi-border); border-radius:4px;
+  margin:12px 0; overflow:hidden;
+}
+.uc-header {
+  background:#EFF6FC; border-bottom:1px solid #C7E0F4;
+  padding:8px 14px; display:flex; align-items:center; gap:7px;
+  font-size:11px; font-weight:600; color:var(--pbi-blue);
+}
+.uc-header::before { content:'👆'; }
+.uc-body { padding:12px 14px; font-size:12px; color:var(--pbi-sub); line-height:1.7; }
+.uc-body strong { color:var(--pbi-text); }
+
+/* ── STEP ── */
+.step {
+  background:white; border:1px solid var(--pbi-border); border-radius:4px;
+  padding:16px 18px; margin-bottom:12px; position:relative; overflow:hidden;
+}
+.step::before { content:''; position:absolute; top:0; left:0; width:3px; height:100%; background:var(--step-color, var(--pbi-blue)); }
+.step-num { font-size:9px; font-family:var(--mono); color:var(--pbi-light); text-transform:uppercase; letter-spacing:1px; margin-bottom:5px; }
+.step h3 { font-size:14px; font-weight:600; margin-bottom:10px; }
+.step ol, .step ul { padding-left:18px; }
+.step li { font-size:12px; color:var(--pbi-sub); margin:7px 0; line-height:1.7; }
+.step li strong { color:var(--pbi-text); }
+p.note { font-size:12px; color:var(--pbi-sub); line-height:1.7; margin-bottom:10px; }
+
+/* ── PBI UI REPLICA（ステップ内のUI再現） ── */
+.pbi-ribbon-btn {
+  display:inline-flex; align-items:center; gap:5px;
+  background:white; border:1px solid var(--pbi-border); border-radius:3px;
+  padding:3px 10px; font-size:11px; color:var(--pbi-text); font-family:var(--sans);
+  cursor:default; vertical-align:middle;
+}
+.pbi-ribbon-btn.primary { background:#EFF6FC; border-color:var(--pbi-blue); color:var(--pbi-blue); font-weight:600; }
+.pbi-tab-replica {
+  display:inline-flex; align-items:center;
+  border-bottom:2px solid var(--pbi-blue); color:var(--pbi-text);
+  padding:4px 10px; font-size:11px; font-weight:600; background:var(--pbi-hover);
+}
+.pbi-dropdown {
+  display:inline-block; background:white; border:1px solid var(--pbi-border);
+  border-radius:2px; padding:3px 22px 3px 8px; font-size:11px; color:var(--pbi-text);
+  position:relative; cursor:default;
+}
+.pbi-dropdown::after { content:'▾'; position:absolute; right:6px; top:50%; transform:translateY(-50%); font-size:9px; color:var(--pbi-sub); }
+.pbi-panel-item {
+  display:flex; align-items:center; gap:6px;
+  background:var(--pbi-hover); border-radius:2px;
+  padding:4px 8px; font-size:11px; color:var(--pbi-text);
+  margin:3px 0; width:fit-content;
+}
+.pbi-panel-icon { font-size:11px; color:var(--pbi-blue); }
+.pbi-check {
+  display:inline-flex; align-items:center; gap:5px;
+  font-size:11px; padding:2px 6px; cursor:default;
+}
+.pbi-check input { accent-color:var(--pbi-blue); }
+
+.path {
+  background:#F8F8F8; border:1px solid var(--pbi-border); border-radius:3px;
+  padding:8px 12px; font-family:var(--mono); font-size:11px; color:var(--pbi-text);
+  margin:8px 0; display:flex; align-items:center; gap:6px;
+}
+.path-sep { color:var(--pbi-light); }
+
+.code-block {
+  background:#1B1B1B; border-radius:4px;
+  padding:12px 16px; margin:10px 0; position:relative;
+  font-family:var(--mono); font-size:11px; line-height:1.9;
+  color:#9CDCFE; overflow-x:auto; white-space:pre;
+}
+.copy-btn {
+  position:absolute; top:8px; right:8px;
+  background:#2D2D2D; border:1px solid #444; border-radius:3px;
+  padding:3px 10px; font-size:10px; font-family:var(--mono);
+  color:#A9A9A9; cursor:pointer; transition:.15s;
+}
+.copy-btn:hover { color:white; }
+.copy-btn.copied { color:#4FC1FF; border-color:#4FC1FF; }
+
+.field-table {
+  width:100%; border-collapse:collapse; margin:10px 0; font-size:12px;
+}
+.field-table th {
+  background:var(--pbi-hover); padding:7px 12px; text-align:left;
+  font-size:10px; color:var(--pbi-sub); border:1px solid var(--pbi-border); font-weight:600;
+}
+.field-table td { padding:8px 12px; border:1px solid var(--pbi-border); vertical-align:middle; }
+.field-table tr:nth-child(even) td { background:#FAFAF9; }
+code {
+  background:var(--pbi-hover); border:1px solid var(--pbi-border);
+  padding:1px 7px; border-radius:3px; font-family:var(--mono); font-size:11px; color:var(--pbi-blue);
+}
+
+.tip {
+  background:#F1FAF1; border:1px solid #BAE0BA; border-radius:4px;
+  padding:9px 13px; margin:10px 0; font-size:12px; color:#0E700E; line-height:1.7;
+}
+.tip::before { content:'✅ '; }
+.warn {
+  background:#FFF9F0; border:1px solid #F4C98D; border-radius:4px;
+  padding:9px 13px; margin:10px 0; font-size:12px; color:#7A4100; line-height:1.7;
+}
+.warn::before { content:'⚠️ '; }
+
+.palette { display:flex; gap:8px; flex-wrap:wrap; margin:10px 0; }
+.swatch {
+  display:flex; align-items:center; gap:8px;
+  background:white; border:1px solid var(--pbi-border); border-radius:4px;
+  padding:7px 11px; cursor:pointer;
+}
+.swatch:hover { border-color:var(--pbi-blue); }
+.swatch-dot { width:18px; height:18px; border-radius:3px; flex-shrink:0; }
+.swatch-name { font-size:11px; font-weight:600; }
+.swatch-hex { font-size:10px; font-family:var(--mono); color:var(--pbi-sub); }
+
+.checklist { display:flex; flex-direction:column; gap:5px; margin:12px 0; }
+.check-item {
+  display:flex; align-items:center; gap:10px;
+  padding:8px 14px; background:white;
+  border:1px solid var(--pbi-border); border-radius:4px; cursor:pointer;
+}
+.check-item:hover { border-color:var(--pbi-blue); background:var(--pbi-hover); }
+.check-box {
+  width:16px; height:16px; border:1.5px solid var(--pbi-border); border-radius:3px;
+  flex-shrink:0; display:flex; align-items:center; justify-content:center; font-size:10px;
+}
+.check-item.done .check-box { background:var(--pbi-blue); border-color:var(--pbi-blue); color:white; }
+.check-item.done .check-text { text-decoration:line-through; color:var(--pbi-light); }
+.check-text { font-size:12px; flex:1; }
+.check-time { font-size:9px; font-family:var(--mono); color:var(--pbi-light); }
+
+hr { border:none; border-top:1px solid var(--pbi-border); margin:18px 0; }
+</style>
+</head>
+<body>
+
+<!-- NAV -->
+<nav class="nav">
+  <div class="nav-logo">
+    <div class="nav-logo-icon">📊</div>
+    <div>
+      <div class="nav-logo-text">Power BI Desktop<br>作成ガイド</div>
+      <div class="nav-logo-sub">脆弱性管理ダッシュボード</div>
+    </div>
+  </div>
+
+  <!-- モックアップ縮小プレビュー -->
+  <div class="nav-preview">
+    <div class="np-label">完成イメージ</div>
+    <div class="np-screen">
+      <div class="np-titlebar">📊 Power BI Desktop — 脆弱性管理ダッシュボード.pbix</div>
+      <div class="np-ribbon">ホーム　挿入　モデリング　表示</div>
+      <div class="np-body">
+        <div class="np-left"></div>
+        <div class="np-canvas">
+          <div style="display:flex;gap:2px;height:8px">
+            <div style="width:30px;background:#EDEBE9;border:1px solid #D2D0CE;border-radius:1px"></div>
+            <div style="flex:1;background:#EDEBE9;border:1px solid #D2D0CE;border-radius:1px"></div>
+          </div>
+          <div class="np-comment"></div>
+          <div class="np-bar" style="height:10px"></div>
+          <div class="np-bar" style="height:10px"></div>
+          <div class="np-bar" style="height:10px"></div>
+        </div>
+        <div class="np-right"></div>
+      </div>
+      <div class="np-tabs">
+        <div class="np-tab active">🔴 脆弱性</div>
+        <div class="np-tab">🟠 ハイリスク</div>
+        <div class="np-tab">🔵 管理画面</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="nav-section">準備</div>
+  <div class="nav-item active" onclick="show('p0',this)">
+    <div class="nav-dot" style="background:var(--close)"></div>チェックリスト
+    <span class="nav-num">00</span>
+  </div>
+  <div class="nav-item" onclick="show('p1',this)">
+    <div class="nav-dot" style="background:var(--pbi-blue)"></div>データ接続
+    <span class="nav-num">01</span>
+  </div>
+  <div class="nav-section">設定</div>
+  <div class="nav-item" onclick="show('p2',this)">
+    <div class="nav-dot" style="background:var(--open)"></div>DAX メジャー
+    <span class="nav-num">02</span>
+  </div>
+  <div class="nav-item" onclick="show('p3',this)">
+    <div class="nav-dot" style="background:var(--pbi-blue)"></div>地域カラー
+    <span class="nav-num">03</span>
+  </div>
+  <div class="nav-section">ページ作成</div>
+  <div class="nav-item" onclick="show('p4',this)">
+    <div class="nav-dot" style="background:var(--vuln)"></div>🔴 脆弱性ページ
+    <span class="nav-num">04</span>
+  </div>
+  <div class="nav-item" onclick="show('p5',this)">
+    <div class="nav-dot" style="background:var(--port)"></div>🟠 ハイリスクポート
+    <span class="nav-num">05</span>
+  </div>
+  <div class="nav-item" onclick="show('p6',this)">
+    <div class="nav-dot" style="background:var(--adm)"></div>🔵 管理画面公開
+    <span class="nav-num">06</span>
+  </div>
+  <div class="nav-section">仕上げ</div>
+  <div class="nav-item" onclick="show('p7',this)">
+    <div class="nav-dot" style="background:var(--pbi-blue)"></div>スライサー設定
+    <span class="nav-num">07</span>
+  </div>
+  <div class="nav-item" onclick="show('p8',this)">
+    <div class="nav-dot" style="background:var(--pbi-light)"></div>毎月の更新
+    <span class="nav-num">08</span>
+  </div>
+</nav>
+
+<!-- MAIN -->
+<div class="main">
+
+<!-- ── P0: チェックリスト ── -->
+<div class="page active" id="p0">
+  <div class="page-title">作業チェックリスト <span class="page-title-badge">全体 約80分</span></div>
+  <p class="page-sub">クリックしながら進めてください。完了した手順はチェックが入ります。</p>
+
+  <div class="checklist">
+    <div class="check-item" onclick="toggle(this)"><div class="check-box"></div><div class="check-text">vuln_final.xlsx を作業フォルダに配置</div><div class="check-time">2 min</div></div>
+    <div class="check-item" onclick="toggle(this)"><div class="check-box"></div><div class="check-text">Power BI Desktop を起動 → Excel接続（メトリクステーブル・コメントテーブル）</div><div class="check-time">5 min</div></div>
+    <div class="check-item" onclick="toggle(this)"><div class="check-box"></div><div class="check-text">Power Query で年月列を日付型に変換</div><div class="check-time">3 min</div></div>
+    <div class="check-item" onclick="toggle(this)"><div class="check-box"></div><div class="check-text">DAXメジャー 2本 を作成（コピペ）</div><div class="check-time">4 min</div></div>
+    <div class="check-item" onclick="toggle(this)"><div class="check-box"></div><div class="check-text">月スライサー（ドロップダウン・単一選択）を配置</div><div class="check-time">4 min</div></div>
+    <div class="check-item" onclick="toggle(this)"><div class="check-box"></div><div class="check-text">地域スライサー（チェックボックス）を配置</div><div class="check-time">4 min</div></div>
+    <div class="check-item" onclick="toggle(this)"><div class="check-box"></div><div class="check-text">💬 コメントテーブルビジュアルをページ先頭に配置</div><div class="check-time">5 min</div></div>
+    <div class="check-item" onclick="toggle(this)"><div class="check-box"></div><div class="check-text">📊 新規通知件数グラフを作成・色設定</div><div class="check-time">10 min</div></div>
+    <div class="check-item" onclick="toggle(this)"><div class="check-box"></div><div class="check-text">📊 累計Open推移グラフを作成（①をコピーしてY軸変更）</div><div class="check-time">5 min</div></div>
+    <div class="check-item" onclick="toggle(this)"><div class="check-box"></div><div class="check-text">📊 累計Close推移グラフを作成（②をコピーしてY軸変更）</div><div class="check-time">5 min</div></div>
+    <div class="check-item" onclick="toggle(this)"><div class="check-box"></div><div class="check-text">ページタブを「🔴 脆弱性」にリネーム</div><div class="check-time">1 min</div></div>
+    <div class="check-item" onclick="toggle(this)"><div class="check-box"></div><div class="check-text">ページを複製 ×2 → カテゴリフィルター変更・ページ名変更</div><div class="check-time">15 min</div></div>
+    <div class="check-item" onclick="toggle(this)"><div class="check-box"></div><div class="check-text">.pbix を保存 → Teams/SharePointに配置</div><div class="check-time">5 min</div></div>
+  </div>
+</div>
+
+<!-- ── P1: データ接続 ── -->
+<div class="page" id="p1">
+  <div class="page-title">01 — データ接続 <span class="page-title-badge">5 min</span></div>
+
+  <div class="ui-callout">
+    <div class="uc-header">リボン「ホーム」タブを操作します</div>
+    <div class="uc-body">
+      画面上部のリボン内 <span class="pbi-ribbon-btn">🗄 Excelブック</span> をクリック
+    </div>
+  </div>
+
+  <div class="step" style="--step-color:var(--pbi-blue)">
+    <div class="step-num">STEP 1</div>
+    <h3>Excelブックを接続する</h3>
+    <ol>
+      <li>リボン <strong>「ホーム」</strong> → <span class="pbi-ribbon-btn">🗄 Excelブック</span> をクリック</li>
+      <li><code>vuln_final.xlsx</code> を選択して「開く」</li>
+      <li>ナビゲーターダイアログで以下の2つにチェック</li>
+    </ol>
+    <div style="margin:10px 0;display:flex;flex-direction:column;gap:4px">
+      <div class="pbi-check"><input type="checkbox" checked disabled> <span>📋 メトリクステーブル</span></div>
+      <div class="pbi-check"><input type="checkbox" checked disabled> <span>📋 コメントテーブル</span></div>
+    </div>
+    <ol start="4"><li><strong>「読み込み」</strong> をクリック（「データの変換」は次のステップで）</li></ol>
+  </div>
+
+  <div class="step" style="--step-color:var(--open)">
+    <div class="step-num">STEP 2</div>
+    <h3>年月列を日付型に変換（必須）</h3>
+    <div class="ui-callout">
+      <div class="uc-header">リボン「ホーム」→「データの変換」を操作します</div>
+      <div class="uc-body">Power Query エディターが開きます</div>
+    </div>
+    <ol>
+      <li>リボン <strong>「ホーム」</strong> → <span class="pbi-ribbon-btn">データの変換</span></li>
+      <li>左ペインで <strong>「メトリクステーブル」</strong> を選択</li>
+      <li>「年月」列のヘッダー左の型アイコン（<code>ABC</code>）をクリック → <strong>「日付」</strong> を選択</li>
+      <li>「現在のものを置換」を選択</li>
+      <li>左ペインで <strong>「コメントテーブル」</strong> を選択して同じ操作</li>
+      <li>リボン <strong>「閉じて適用」</strong></li>
+    </ol>
+    <div class="warn">この変換をしないとグラフのX軸が「1月→10月→11月…」という文字順になります。必ず実施してください。</div>
+  </div>
+
+  <div class="step" style="--step-color:var(--pbi-blue)">
+    <div class="step-num">確認</div>
+    <h3>右ペインのフィールドを確認</h3>
+    <p class="note">読み込みが完了すると、右ペイン「データ」タブに以下が表示されます。</p>
+    <div style="display:flex;flex-direction:column;gap:3px">
+      <div class="pbi-panel-item"><span class="pbi-panel-icon">📅</span>メトリクステーブル ▾</div>
+      <div style="padding-left:16px;display:flex;flex-direction:column;gap:2px">
+        <div class="pbi-panel-item" style="background:#FAFAF9"><span class="pbi-panel-icon">📅</span>年月</div>
+        <div class="pbi-panel-item" style="background:#FAFAF9"><span class="pbi-panel-icon">🔤</span>カテゴリ</div>
+        <div class="pbi-panel-item" style="background:#FAFAF9"><span class="pbi-panel-icon">🔤</span>地域</div>
+        <div class="pbi-panel-item" style="background:#FAFAF9"><span class="pbi-panel-icon">∑</span>新規通知数</div>
+        <div class="pbi-panel-item" style="background:#FAFAF9"><span class="pbi-panel-icon">∑</span>累計Open数</div>
+        <div class="pbi-panel-item" style="background:#FAFAF9"><span class="pbi-panel-icon">∑</span>累計Close数</div>
+      </div>
+      <div class="pbi-panel-item"><span class="pbi-panel-icon">📅</span>コメントテーブル ▾</div>
+    </div>
+  </div>
+</div>
+
+<!-- ── P2: DAX ── -->
+<div class="page" id="p2">
+  <div class="page-title">02 — DAXメジャー <span class="page-title-badge">4 min</span></div>
+
+  <div class="ui-callout">
+    <div class="uc-header">右ペイン「データ」タブ → メトリクステーブルを右クリックします</div>
+    <div class="uc-body">
+      <strong>「メトリクステーブル」</strong> を右クリック → <strong>「新しいメジャー」</strong> → 数式バーにコードを貼り付け → Enter
+    </div>
+  </div>
+
+  <div class="step" style="--step-color:var(--open)">
+    <div class="step-num">メジャー ①（必須）</div>
+    <h3>直近12ヶ月フラグ — 全グラフに適用するフィルター</h3>
+    <div class="code-block"><button class="copy-btn" onclick="copyCode(this)">COPY</button>直近12ヶ月フラグ =
+VAR MaxDate = CALCULATE(MAX('メトリクステーブル'[年月]), ALL('メトリクステーブル'))
+VAR MinDate = DATE(YEAR(MaxDate), MONTH(MaxDate) - 11, 1)
+RETURN IF(MAX('メトリクステーブル'[年月]) >= MinDate, 1, 0)</div>
+    <div class="tip">各グラフのビジュアルフィルターに「直近12ヶ月フラグ が 1 である」を追加すると、月スライサーで選んだ月を基準に直近12ヶ月が自動表示されます。</div>
+  </div>
+
+  <div class="step" style="--step-color:var(--open)">
+    <div class="step-num">メジャー ②（任意）</div>
+    <h3>前月比 — グラフタイトル横の増減表示用</h3>
+    <div class="code-block"><button class="copy-btn" onclick="copyCode(this)">COPY</button>前月比_新規通知 =
+VAR 今月 = CALCULATE(SUM('メトリクステーブル'[新規通知数]),
+    DATESMTD('メトリクステーブル'[年月]))
+VAR 先月 = CALCULATE(SUM('メトリクステーブル'[新規通知数]),
+    DATEADD(DATESMTD('メトリクステーブル'[年月]), -1, MONTH))
+RETURN 今月 - 先月</div>
+  </div>
+</div>
+
+<!-- ── P3: カラー ── -->
+<div class="page" id="p3">
+  <div class="page-title">03 — 地域カラー設定</div>
+  <p class="page-sub">グラフ選択 → 右ペイン「書式」タブ → データの色 → 地域ごとに設定します。クリックでコードをコピー。</p>
+
+  <div class="step" style="--step-color:var(--pbi-blue)">
+    <div class="step-num">6地域カラーコード（全グラフ共通）</div>
+    <h3>1枚目のグラフで設定すればコピー時に引き継がれます</h3>
+    <div class="palette">
+      <div class="swatch" onclick="copyText('#E05252',this)"><div class="swatch-dot" style="background:#E05252"></div><div><div class="swatch-name">日本</div><div class="swatch-hex">#E05252</div></div></div>
+      <div class="swatch" onclick="copyText('#E09818',this)"><div class="swatch-dot" style="background:#E09818"></div><div><div class="swatch-name">APAC</div><div class="swatch-hex">#E09818</div></div></div>
+      <div class="swatch" onclick="copyText('#38B068',this)"><div class="swatch-dot" style="background:#38B068"></div><div><div class="swatch-name">NA/LA</div><div class="swatch-hex">#38B068</div></div></div>
+      <div class="swatch" onclick="copyText('#4A9EFF',this)"><div class="swatch-dot" style="background:#4A9EFF"></div><div><div class="swatch-name">EU</div><div class="swatch-hex">#4A9EFF</div></div></div>
+      <div class="swatch" onclick="copyText('#B87AFF',this)"><div class="swatch-dot" style="background:#B87AFF"></div><div><div class="swatch-name">CNA</div><div class="swatch-hex">#B87AFF</div></div></div>
+      <div class="swatch" onclick="copyText('#F070B8',this)"><div class="swatch-dot" style="background:#F070B8"></div><div><div class="swatch-name">ISMEA</div><div class="swatch-hex">#F070B8</div></div></div>
+    </div>
+    <div class="ui-callout">
+      <div class="uc-header">右ペイン「書式」タブで設定します</div>
+      <div class="uc-body">
+        グラフを選択 → 右ペイン <span class="pbi-tab-replica">書式</span> → <strong>「データの色」</strong> → 地域名ごとにカラーコードを入力
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ── P4: 脆弱性ページ ── -->
+<div class="page" id="p4">
+  <div class="page-title">04 — 🔴 脆弱性ページ <span class="page-title-badge">最初に完成させる</span></div>
+  <p class="page-sub">このページを完成させたら「ページを複製 ×2」でカテゴリフィルターを変えるだけで残り2ページが完成します。</p>
+
+  <div class="step" style="--step-color:var(--pbi-blue)">
+    <div class="step-num">ページタブ操作</div>
+    <h3>ページ名を変更する</h3>
+    <ol>
+      <li>画面下部のページタブ <strong>「ページ 1」</strong> をダブルクリック</li>
+      <li><code>🔴 脆弱性</code> と入力 → Enter</li>
+    </ol>
+    <div class="tip">絵文字もそのまま入力できます。タブが色分けされて見やすくなります。</div>
+  </div>
+
+  <div class="step" style="--step-color:var(--pbi-blue)">
+    <div class="step-num">先頭ビジュアル：コメント</div>
+    <h3>💬 月次コメントをページ先頭に配置</h3>
+    <div class="ui-callout">
+      <div class="uc-header">右ペイン「視覚化」タブ → テーブルアイコンをクリックします</div>
+      <div class="uc-body">視覚化パネルのグリッドから <strong>🗂 テーブル</strong> を選択するとキャンバスにテーブルビジュアルが追加されます</div>
+    </div>
+    <table class="field-table">
+      <tr><th>設定</th><th>値</th></tr>
+      <tr><td>ビジュアル</td><td><code>テーブル</code></td></tr>
+      <tr><td>列フィールド</td><td><code>コメントテーブル[コメント]</code> のみ</td></tr>
+      <tr><td>ビジュアルフィルター</td><td><code>コメントテーブル[カテゴリ]</code> が <code>脆弱性</code> である</td></tr>
+      <tr><td>配置</td><td>キャンバス上部いっぱいに横長配置</td></tr>
+      <tr><td>書式 → 列ヘッダー</td><td>オフ（ヘッダー行を非表示）</td></tr>
+    </table>
+  </div>
+
+  <div class="step" style="--step-color:#E05252">
+    <div class="step-num">グラフ ①</div>
+    <h3>新規通知件数 — 積み上げ縦棒グラフ</h3>
+    <div class="ui-callout">
+      <div class="uc-header">右ペイン「視覚化」→ 積み上げ縦棒グラフアイコンをクリックします</div>
+      <div class="uc-body">📶 積み上げ縦棒グラフを選択してキャンバスに配置</div>
+    </div>
+    <table class="field-table">
+      <tr><th>ウェル</th><th>フィールド</th></tr>
+      <tr><td>X 軸</td><td><code>メトリクステーブル[年月]</code></td></tr>
+      <tr><td>Y 軸</td><td><code>メトリクステーブル[新規通知数]</code>（合計）</td></tr>
+      <tr><td>凡例</td><td><code>メトリクステーブル[地域]</code></td></tr>
+    </table>
+    <p class="note" style="margin-top:10px">ビジュアルフィルターに以下を追加：</p>
+    <table class="field-table">
+      <tr><th>フィールド</th><th>条件</th></tr>
+      <tr><td><code>メトリクステーブル[カテゴリ]</code></td><td>が <code>脆弱性</code> である</td></tr>
+      <tr><td><code>直近12ヶ月フラグ</code></td><td>が <code>1</code> である</td></tr>
+    </table>
+  </div>
+
+  <div class="step" style="--step-color:#D4A820">
+    <div class="step-num">グラフ ②</div>
+    <h3>累計 Open 推移 — グラフ①をコピーして変更</h3>
+    <ol>
+      <li>グラフ①を選択 → <strong>Ctrl+C → Ctrl+V</strong></li>
+      <li>Y軸フィールドを <code>累計Open数</code> に変更</li>
+    </ol>
+    <div class="tip">カテゴリフィルターと地域カラーはコピーで引き継がれるので変更不要です。</div>
+  </div>
+
+  <div class="step" style="--step-color:#107C10">
+    <div class="step-num">グラフ ③</div>
+    <h3>累計 Close 推移 — グラフ②をコピーして変更</h3>
+    <ol>
+      <li>グラフ②を選択 → <strong>Ctrl+C → Ctrl+V</strong></li>
+      <li>Y軸フィールドを <code>累計Close数</code> に変更</li>
+    </ol>
+  </div>
+</div>
+
+<!-- ── P5: ハイリスクポート ── -->
+<div class="page" id="p5">
+  <div class="page-title">05 — 🟠 ハイリスクポート検知ページ <span class="page-title-badge">ページ複製</span></div>
+
+  <div class="ui-callout">
+    <div class="uc-header">画面下部のページタブを右クリックします</div>
+    <div class="uc-body">
+      <strong>「🔴 脆弱性」タブ</strong> を右クリック → <strong>「ページを複製」</strong>
+    </div>
+  </div>
+
+  <div class="step" style="--step-color:var(--port)">
+    <div class="step-num">手順</div>
+    <h3>複製後にカテゴリフィルターを変更</h3>
+    <ol>
+      <li>ページタブ「🔴 脆弱性 (2)」をダブルクリック → <code>🟠 ハイリスクポート検知</code> に変更</li>
+      <li>コメントビジュアル → ビジュアルフィルターのカテゴリを変更：</li>
+    </ol>
+    <div class="code-block"><button class="copy-btn" onclick="copyCode(this)">COPY</button>ハイリスクポート検知</div>
+    <ol start="3">
+      <li>グラフ①②③のビジュアルフィルター（カテゴリ）を同じ値に変更</li>
+    </ol>
+    <div class="warn">ビジュアルが4つある（コメント1 + グラフ3）ので、すべてのカテゴリフィルターを変更してください。</div>
+  </div>
+</div>
+
+<!-- ── P6: 管理画面 ── -->
+<div class="page" id="p6">
+  <div class="page-title">06 — 🔵 管理画面公開検知ページ <span class="page-title-badge">ページ複製</span></div>
+
+  <div class="step" style="--step-color:var(--adm)">
+    <div class="step-num">カテゴリフィルター値</div>
+    <h3>このテキストをビジュアルフィルターに貼り付け（全4ビジュアル）</h3>
+    <div class="code-block"><button class="copy-btn" onclick="copyCode(this)">COPY</button>管理画面公開検知</div>
+    <ol>
+      <li>ページタブ名も <code>🔵 管理画面公開検知</code> に変更</li>
+    </ol>
+  </div>
+</div>
+
+<!-- ── P7: スライサー ── -->
+<div class="page" id="p7">
+  <div class="page-title">07 — スライサー設定</div>
+  <p class="page-sub">スライサーは各ページ共通です。1ページ目で作成後、コピーして他のページに貼り付けます。</p>
+
+  <div class="step" style="--step-color:var(--pbi-blue)">
+    <div class="step-num">月スライサー</div>
+    <h3>対象月ドロップダウン（単一選択）</h3>
+    <div class="ui-callout">
+      <div class="uc-header">視覚化パネル → 🔘 スライサーを配置します</div>
+      <div class="uc-body">スライサーアイコンをクリック → フィールドに <code>メトリクステーブル[年月]</code> をドラッグ</div>
+    </div>
+    <table class="field-table">
+      <tr><th>設定箇所</th><th>操作</th></tr>
+      <tr><td>スライサーの種類</td><td>右ペイン「書式」→ スライサーの設定 → <strong>「ドロップダウン」</strong></td></tr>
+      <tr><td>選択の種類</td><td>「選択の種類」→ <strong>「単一選択」</strong> をオン</td></tr>
+    </table>
+    <div class="tip">単一選択にすることで「選択した月のコメント」が正確に1件だけ表示されます。ドロップダウンにすると画面スペースも節約できます。</div>
+  </div>
+
+  <div class="step" style="--step-color:var(--pbi-blue)">
+    <div class="step-num">地域スライサー</div>
+    <h3>地域チェックボックス（複数選択）</h3>
+    <table class="field-table">
+      <tr><th>設定</th><th>値</th></tr>
+      <tr><td>フィールド</td><td><code>メトリクステーブル[地域]</code></td></tr>
+      <tr><td>スライサーの種類</td><td><strong>リスト</strong>（デフォルトのまま）</td></tr>
+      <tr><td>選択の種類</td><td>複数選択（デフォルトのまま）</td></tr>
+    </table>
+  </div>
+
+  <div class="step" style="--step-color:var(--pbi-blue)">
+    <div class="step-num">他のページへのコピー</div>
+    <h3>スライサーを2・3ページ目にも貼り付ける</h3>
+    <ol>
+      <li>月スライサーと地域スライサーを両方選択（Ctrl+クリック）</li>
+      <li><strong>Ctrl+C</strong></li>
+      <li>🟠 ハイリスクポート検知ページのタブをクリック</li>
+      <li><strong>Ctrl+V</strong>（同じ位置に貼り付けられます）</li>
+      <li>🔵 管理画面公開検知ページでも同じ操作</li>
+    </ol>
+    <div class="tip">「貼り付け」すると他ページのビジュアルとも自動連動します。再設定は不要です。</div>
+  </div>
+</div>
+
+<!-- ── P8: 毎月の更新 ── -->
+<div class="page" id="p8">
+  <div class="page-title">08 — 毎月の更新 <span class="page-title-badge">約5分</span></div>
+
+  <div class="step" style="--step-color:var(--close)">
+    <div class="step-num">毎月の作業手順</div>
+    <h3>Excel追記 → 更新ボタン → 保存 → 配布</h3>
+    <table class="field-table">
+      <tr><th>シート</th><th>操作</th><th>行数</th><th>注意</th></tr>
+      <tr><td><code>メトリクステーブル</code></td><td>当月分を<strong>追記</strong></td><td>18行<br><small>3カテゴリ×6地域</small></td><td>—</td></tr>
+      <tr><td><code>コメントテーブル</code></td><td>当月分を<strong>追記</strong></td><td>3行<br><small>3カテゴリ×1コメント</small></td><td>⚠️ 過去行を削除しない</td></tr>
+    </table>
+    <hr>
+    <h3 style="margin-bottom:10px">Power BI Desktop での更新手順</h3>
+    <div class="ui-callout">
+      <div class="uc-header">リボン「ホーム」→ 更新ボタンをクリックします</div>
+      <div class="uc-body">
+        <span class="pbi-ribbon-btn primary">🔄 更新</span> をクリック → Excelの最新データが読み込まれます
+      </div>
+    </div>
+    <ol>
+      <li>Excel に当月データを追記して保存</li>
+      <li>Power BI Desktop で .pbix を開く</li>
+      <li>リボン <strong>「ホーム」</strong> → <span class="pbi-ribbon-btn primary">🔄 更新</span></li>
+      <li><strong>Ctrl+S</strong> で .pbix を上書き保存</li>
+      <li>最新の .pbix を Teams チャネルに上書きアップ</li>
+    </ol>
+    <div class="tip">閲覧者は Teams から最新の .pbix をダウンロードして開くだけです。Excelへのアクセス権は不要です。</div>
+  </div>
+</div>
+
+</div><!-- /main -->
+
+<script>
+function show(id,el){
+  document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
+  document.querySelectorAll('.nav-item').forEach(n=>n.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+  if(el) el.classList.add('active');
+}
+function toggle(el){
+  el.classList.toggle('done');
+  el.querySelector('.check-box').textContent = el.classList.contains('done') ? '✓' : '';
+}
+function copyCode(btn){
+  const text = btn.closest('.code-block').textContent.replace('COPY','').replace('COPIED!','').trim();
+  navigator.clipboard.writeText(text).then(()=>{
+    btn.textContent='COPIED!'; btn.classList.add('copied');
+    setTimeout(()=>{ btn.textContent='COPY'; btn.classList.remove('copied'); }, 1500);
+  });
+}
+function copyText(text,el){
+  navigator.clipboard.writeText(text).then(()=>{
+    const h = el.querySelector('.swatch-hex');
+    const orig = h.textContent; h.textContent = 'Copied!';
+    setTimeout(()=> h.textContent = orig, 1200);
+  });
+}
+</script>
+</body>
+</html>
