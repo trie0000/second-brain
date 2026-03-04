@@ -1624,13 +1624,16 @@ async function startRecording() {
     await _startMoonshineRecording();
     return;
   }
-  // 分析に Azure OpenAI 設定が必要（文字起こしエンジン問わず確認）
-  const azureOk = !!(localStorage.getItem("sb_azure_api_key") &&
-                     localStorage.getItem("sb_azure_endpoint") &&
-                     localStorage.getItem("sb_azure_deployment"));
-  if (!azureOk) {
-    showError("Azure OpenAI の設定が未完了です。⚙ からエンドポイント・デプロイ名・APIキーを設定してください。");
-    openSettings(); return;
+  // moonshine-ja はサーバー側文字起こし専用（Azure設定なしでも録音可能）
+  // WhisperX は LLM 分析とセットのため Azure 設定が必要
+  if (transcribeEngine !== "moonshine-ja") {
+    const azureOk = !!(localStorage.getItem("sb_azure_api_key") &&
+                       localStorage.getItem("sb_azure_endpoint") &&
+                       localStorage.getItem("sb_azure_deployment"));
+    if (!azureOk) {
+      showError("Azure OpenAI の設定が未完了です。⚙ からエンドポイント・デプロイ名・APIキーを設定してください。");
+      openSettings(); return;
+    }
   }
   let stream;
   try {
