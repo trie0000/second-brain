@@ -6,717 +6,1999 @@
 <title>🧠 セカンドブレーン</title>
 <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@300;400;500;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
 <style>
-  :root {
-    --bg: #f7f7f5; --surface: #fff; --surface-alt: #fafaf8;
-    --border: #e8e6e1; --border-light: #f0eeea;
-    --text: #1a1a1a; --text-sec: #6b6b6b; --text-muted: #9b9b9b;
-    --accent: #2563eb; --accent-light: #eff4ff;
-    --red: #dc2626; --red-light: #fef2f2;
-    --green: #16a34a; --green-light: #f0fdf4;
-    --orange: #ea580c; --orange-light: #fff7ed;
-    --yellow: #ca8a04; --yellow-light: #fefce8;
-    --font: 'Noto Sans JP', -apple-system, sans-serif;
-    --mono: 'JetBrains Mono', monospace;
-    --radius: 12px;
-  }
-  * { margin:0; padding:0; box-sizing:border-box; }
-  body { font-family:var(--font); background:var(--bg); color:var(--text); line-height:1.6; min-height:100vh; }
+:root {
+  --bg: #1A1A2E;
+  --surface: #16213E;
+  --surface-alt: #1e2a45;
+  --border: #2D3748;
+  --border-light: #2a3550;
+  --text: #E8E8E8;
+  --text-sec: #9CA3AF;
+  --text-muted: #6B7280;
+  --accent: #3B82F6;
+  --accent-light: rgba(59,130,246,.15);
+  --green: #22C55E;
+  --green-light: rgba(34,197,94,.15);
+  --orange: #F97316;
+  --orange-light: rgba(249,115,22,.15);
+  --red: #EF4444;
+  --red-light: rgba(239,68,68,.15);
+  --purple: #A78BFA;
+  --purple-light: rgba(167,139,250,.15);
+  --yellow: #F59E0B;
+  --font: 'Noto Sans JP', -apple-system, sans-serif;
+  --mono: 'JetBrains Mono', monospace;
+  --radius: 10px;
+}
+*, *::before, *::after { margin:0; padding:0; box-sizing:border-box; }
+html, body { height:100%; overflow:hidden; }
+body { font-family:var(--font); background:var(--bg); color:var(--text); line-height:1.6; display:flex; flex-direction:column; }
 
-  .header { background:var(--surface); border-bottom:1px solid var(--border); padding:12px 24px; display:flex; align-items:center; justify-content:space-between; position:sticky; top:0; z-index:100; }
-  .header-left { display:flex; align-items:center; gap:12px; }
-  .logo { font-size:18px; font-weight:700; letter-spacing:-0.02em; }
-  .phase-badge { font-size:10px; padding:2px 8px; background:var(--accent-light); color:var(--accent); border-radius:20px; font-weight:500; }
-  .header-right { display:flex; align-items:center; gap:12px; }
+/* ===== HEADER ===== */
+.header {
+  background:var(--surface); border-bottom:1px solid var(--border);
+  padding:0 16px; height:52px; flex-shrink:0;
+  display:flex; align-items:center; justify-content:space-between; gap:8px;
+  z-index:100;
+}
+.header-left  { display:flex; align-items:center; gap:8px; flex-shrink:0; }
+.header-center{ display:flex; align-items:center; gap:8px; flex:1; justify-content:center; }
+.header-right { display:flex; align-items:center; gap:6px; flex-shrink:0; }
+.logo { font-size:16px; font-weight:700; letter-spacing:-.02em; white-space:nowrap; }
+.server-badge {
+  font-size:10px; padding:2px 7px; border-radius:20px;
+  font-weight:500; border:1px solid; white-space:nowrap;
+}
+.server-badge.online  { background:rgba(34,197,94,.12); color:#4ade80; border-color:rgba(34,197,94,.3); }
+.server-badge.gpu     { background:rgba(59,130,246,.12); color:#60a5fa; border-color:rgba(59,130,246,.3); }
+.server-badge.offline { background:rgba(239,68,68,.12);  color:#f87171; border-color:rgba(239,68,68,.3); }
 
-  .status-badge { display:inline-flex; align-items:center; gap:6px; padding:4px 12px; border-radius:20px; font-size:12px; font-weight:500; }
-  .status-idle { background:#f3f4f6; color:#6b7280; }
-  .status-rec { background:var(--red-light); color:var(--red); }
-  .status-transcribing { background:var(--accent-light); color:var(--accent); }
-  .status-analyzing { background:var(--yellow-light); color:var(--yellow); }
-  .pulse-dot { width:8px; height:8px; background:var(--red); border-radius:50%; animation:pulse 1.5s ease-in-out infinite; }
-  @keyframes pulse { 0%,100%{opacity:1;transform:scale(1)} 50%{opacity:.5;transform:scale(.8)} }
+.btn-rec {
+  display:inline-flex; align-items:center; gap:6px; padding:6px 14px;
+  border:none; border-radius:8px; font-size:13px; font-weight:600;
+  font-family:var(--font); cursor:pointer; transition:all .15s; white-space:nowrap;
+}
+.btn-rec.start { background:var(--red); color:#fff; }
+.btn-rec.start:hover { background:#dc2626; }
+.btn-rec.stop  { background:#374151; color:#e5e7eb; }
+.btn-rec.stop:hover  { background:#4b5563; }
 
-  .timer { font-family:var(--mono); font-size:13px; color:var(--text-muted); min-width:48px; }
-  .btn-settings { background:none; border:1px solid var(--border); border-radius:8px; padding:5px 10px; cursor:pointer; font-size:14px; color:var(--text-sec); }
-  .btn-settings:hover { background:var(--surface-alt); }
+.rec-indicator { display:none; align-items:center; gap:6px; font-size:12px; color:var(--red); font-family:var(--mono); font-weight:600; }
+.rec-indicator.active { display:flex; }
+.pulse-dot { width:8px; height:8px; background:var(--red); border-radius:50%; animation:pulse 1.5s ease-in-out infinite; flex-shrink:0; }
+@keyframes pulse { 0%,100%{opacity:1;transform:scale(1)} 50%{opacity:.3;transform:scale(.7)} }
+.timer { font-family:var(--mono); font-size:14px; color:var(--text-sec); min-width:48px; letter-spacing:.02em; }
+.timer.active { color:var(--red); }
 
-  .controls { background:var(--surface); border-bottom:1px solid var(--border-light); padding:8px 24px; display:flex; align-items:center; gap:8px; flex-wrap:wrap; }
-  .btn { display:inline-flex; align-items:center; gap:6px; padding:7px 16px; border:none; border-radius:8px; font-size:13px; font-weight:500; font-family:var(--font); cursor:pointer; transition:all .15s; white-space:nowrap; }
-  .btn:disabled { opacity:.4; cursor:not-allowed; }
-  .btn-rec { background:var(--red); color:#fff; } .btn-rec:hover:not(:disabled){background:#b91c1c}
-  .btn-stop { background:#4b5563; color:#fff; } .btn-stop:hover:not(:disabled){background:#374151}
-  .btn-analyze { background:var(--accent); color:#fff; } .btn-analyze:hover:not(:disabled){background:#1d4ed8}
-  .btn-outline { background:var(--surface); border:1px solid var(--border); color:var(--text-sec); } .btn-outline:hover:not(:disabled){background:var(--surface-alt)}
-  .controls-right { margin-left:auto; display:flex; align-items:center; gap:8px; }
-  .auto-label { display:flex; align-items:center; gap:6px; font-size:12px; color:var(--text-muted); cursor:pointer; user-select:none; }
-  .auto-label input { accent-color:var(--accent); }
+.vol-mini { display:none; align-items:center; gap:4px; }
+.vol-mini.active { display:flex; }
+.vol-bar-mini { width:44px; height:5px; background:var(--border); border-radius:3px; overflow:hidden; }
+.vol-fill-mini { height:100%; width:0%; border-radius:3px; background:var(--green); transition:width .1s; }
 
-  .error-bar { margin:12px 24px 0; padding:10px 16px; background:var(--red-light); border:1px solid #fecaca; border-radius:8px; font-size:13px; color:var(--red); display:none; align-items:center; justify-content:space-between; }
-  .error-bar button { background:none; border:none; color:var(--red); cursor:pointer; font-size:16px; }
+.btn-icon {
+  background:none; border:1px solid var(--border); border-radius:7px;
+  padding:5px 9px; cursor:pointer; font-size:14px; color:var(--text-sec);
+  transition:all .15s; white-space:nowrap; font-family:var(--font); font-size:13px;
+}
+.btn-icon:hover { background:var(--surface-alt); border-color:var(--border-light); color:var(--text); }
+.btn-icon.on { background:var(--accent-light); border-color:var(--accent); color:var(--accent); }
 
-  .main { max-width:1400px; margin:0 auto; padding:16px 24px; display:grid; grid-template-columns:1fr 1fr 1fr; gap:16px; min-height:calc(100vh - 120px); }
-  .card { background:var(--surface); border:1px solid var(--border); border-radius:var(--radius); box-shadow:0 1px 3px rgba(0,0,0,.04); display:flex; flex-direction:column; overflow:hidden; }
-  .card-header { padding:12px 16px; border-bottom:1px solid var(--border-light); display:flex; align-items:center; justify-content:space-between; flex-shrink:0; }
-  .card-title { font-size:12px; font-weight:600; color:var(--text-sec); text-transform:uppercase; letter-spacing:.05em; }
-  .card-meta { font-size:11px; color:var(--text-muted); font-family:var(--mono); }
-  .card-body { padding:16px; flex:1; overflow-y:auto; }
+.btn-analyze {
+  background:var(--accent); color:#fff; border:none; border-radius:7px;
+  padding:5px 12px; font-size:12px; font-weight:600; font-family:var(--font);
+  cursor:pointer; transition:all .15s; white-space:nowrap;
+}
+.btn-analyze:hover:not(:disabled) { background:#2563eb; }
+.btn-analyze:disabled { opacity:.4; cursor:not-allowed; }
 
-  /* 文字起こし表示 */
-  .transcript-line { font-size:13px; color:var(--text-sec); margin-bottom:6px; line-height:1.7; }
-  .transcript-empty { display:flex; align-items:center; justify-content:center; height:100%; text-align:center; color:var(--text-muted); }
-  .transcript-empty-icon { font-size:40px; margin-bottom:12px; }
-  .transcript-empty p { font-size:13px; }
-  .transcript-empty .sub { font-size:11px; margin-top:4px; }
+/* ===== ERROR BAR ===== */
+.error-bar {
+  flex-shrink:0; margin:0 16px; padding:7px 14px;
+  background:var(--red-light); border:1px solid rgba(239,68,68,.3);
+  border-radius:8px; font-size:13px; color:var(--red);
+  display:none; align-items:center; justify-content:space-between;
+  margin-top:8px;
+}
+.error-bar button { background:none; border:none; color:var(--red); cursor:pointer; font-size:16px; line-height:1; }
 
-  /* 話者分離表示 */
-  .speaker-segment { display:flex; gap:8px; margin-bottom:6px; align-items:flex-start; }
-  .speaker-label { font-weight:600; font-size:0.7rem; white-space:nowrap; padding:2px 7px; border-radius:4px; margin-top:2px; font-family:var(--mono); flex-shrink:0; }
-  .speaker-text { flex:1; line-height:1.65; font-size:13px; color:var(--text-sec); }
-  .speaker-a .speaker-label { background:#dbeafe; color:#1d4ed8; }
-  .speaker-b .speaker-label { background:#dcfce7; color:#15803d; }
-  .speaker-c .speaker-label { background:#fef9c3; color:#a16207; }
-  .speaker-d .speaker-label { background:#f3e8ff; color:#7e22ce; }
-  .speaker-e .speaker-label { background:#ffe4e6; color:#be123c; }
-  .speaker-unknown .speaker-label { background:#f3f4f6; color:#6b7280; }
-  .transcript-pending-block { margin-top:8px; padding:8px 10px; border-left:3px solid #cbd5e1; }
-  .transcript-pending-label { font-size:10px; color:var(--text-muted); margin-bottom:4px; text-transform:uppercase; letter-spacing:.04em; }
-  .transcript-pending-text { font-size:13px; color:var(--text-muted); line-height:1.65; }
-  .processing-indicator { display:flex; align-items:center; gap:8px; font-size:12px; color:var(--accent); padding:8px 0; }
-  .spin { animation:spin 1s linear infinite; display:inline-block; }
-  @keyframes spin { from{transform:rotate(0deg)} to{transform:rotate(360deg)} }
+/* ===== CHUNK PROGRESS ===== */
+.progress-wrap { flex-shrink:0; padding:4px 16px; display:none; }
+.progress-track { width:100%; height:3px; background:var(--border); border-radius:2px; overflow:hidden; }
+.progress-fill  { height:100%; background:var(--accent); border-radius:2px; transition:width .5s linear; }
+.progress-label { font-size:10px; color:var(--text-muted); text-align:center; margin-top:3px; }
 
-  /* チャンク進行バー（左ペイン下部） */
-  .progress-bar-wrap { padding:8px 16px 12px; border-top:1px solid var(--border-light); flex-shrink:0; display:none; }
-  .progress-track { width:100%; height:4px; background:#f0f0ee; border-radius:2px; overflow:hidden; }
-  .progress-fill { height:100%; background:var(--accent); border-radius:2px; transition:width .5s linear; }
-  .progress-label { font-size:11px; color:var(--text-muted); text-align:center; margin-top:4px; }
+/* ===== TRANSCRIPT PANEL (collapsible) ===== */
+.transcript-panel {
+  flex-shrink:0; display:none; overflow-y:auto;
+  max-height:180px; background:var(--surface-alt);
+  border-bottom:1px solid var(--border); padding:10px 16px;
+}
+.transcript-panel.open { display:block; }
+.tr-line { font-size:12px; color:var(--text-sec); margin-bottom:3px; line-height:1.7; }
+.speaker-seg { display:flex; gap:8px; margin-bottom:4px; align-items:flex-start; }
+.sp-label { font-weight:600; font-size:.7rem; white-space:nowrap; padding:2px 6px; border-radius:4px; margin-top:2px; font-family:var(--mono); flex-shrink:0; }
+.sp-text  { flex:1; line-height:1.6; font-size:12px; color:var(--text-sec); }
+.sp-a .sp-label { background:rgba(59,130,246,.2); color:#93c5fd; }
+.sp-b .sp-label { background:rgba(34,197,94,.2); color:#86efac; }
+.sp-c .sp-label { background:rgba(245,158,11,.2); color:#fcd34d; }
+.sp-d .sp-label { background:rgba(167,139,250,.2); color:#c4b5fd; }
+.sp-e .sp-label { background:rgba(239,68,68,.2); color:#fca5a5; }
+.sp-u .sp-label { background:var(--border); color:var(--text-muted); }
+.tr-pending { margin-top:6px; padding:5px 8px; border-left:2px solid var(--border); }
+.tr-pending-label { font-size:10px; color:var(--text-muted); margin-bottom:2px; text-transform:uppercase; letter-spacing:.04em; }
+.tr-pending-text  { font-size:12px; color:var(--text-muted); }
+.tr-processing { display:flex; align-items:center; gap:6px; font-size:12px; color:var(--accent); padding:5px 0; }
+.spin { animation:spin 1s linear infinite; display:inline-block; }
+@keyframes spin { from{transform:rotate(0deg)} to{transform:rotate(360deg)} }
 
-  /* 分析結果ペイン */
-  .topic-card { background:var(--accent-light); border:1px solid #bfdbfe; border-radius:10px; padding:14px 16px; margin-bottom:12px; }
-  .topic-label { font-size:11px; font-weight:600; color:var(--accent); margin-bottom:4px; text-transform:uppercase; letter-spacing:.05em; }
-  .topic-text { font-size:15px; font-weight:700; color:#1e3a8a; line-height:1.4; }
-  .summary-text { font-size:13px; color:var(--text-sec); line-height:1.8; margin-bottom:16px; }
-  .points-list { list-style:none; }
-  .points-list li { display:flex; align-items:flex-start; gap:8px; font-size:13px; color:var(--text); padding:6px 0; line-height:1.5; }
-  .point-dot { width:6px; height:6px; border-radius:50%; background:var(--accent); flex-shrink:0; margin-top:7px; }
+/* ===== MAIN 2-PANE ===== */
+.main {
+  flex:1; min-height:0;
+  display:grid; grid-template-columns:70fr 30fr;
+  overflow:hidden;
+}
+.pane-focus   { overflow-y:auto; padding:14px 16px; border-right:1px solid var(--border); }
+.pane-context { overflow-y:auto; padding:14px 16px; }
 
-  .decision-section { background:var(--green-light); border:1px solid #bbf7d0; border-radius:10px; padding:14px 16px; margin-bottom:12px; }
-  .decision-label { font-size:11px; font-weight:600; color:var(--green); margin-bottom:8px; text-transform:uppercase; letter-spacing:.05em; }
-  .decision-list { list-style:none; } .decision-list li { display:flex; gap:8px; font-size:13px; color:#15803d; padding:4px 0; line-height:1.5; }
+/* ===== SECTION HEADERS ===== */
+.sec-title {
+  font-size:11px; font-weight:600; color:var(--text-muted);
+  text-transform:uppercase; letter-spacing:.06em; margin-bottom:8px;
+}
 
-  .action-section { background:var(--orange-light); border:1px solid #fed7aa; border-radius:10px; padding:14px 16px; margin-bottom:12px; }
-  .action-label { font-size:11px; font-weight:600; color:var(--orange); margin-bottom:8px; text-transform:uppercase; letter-spacing:.05em; }
-  .action-list { list-style:none; } .action-list li { display:flex; gap:8px; font-size:13px; color:#9a3412; padding:4px 0; line-height:1.5; }
+/* ===== TOPIC BLOCK ===== */
+.topic-block {
+  padding:12px 14px; border-radius:var(--radius);
+  background:var(--surface); border:1px solid var(--border);
+  margin-bottom:14px;
+}
+.topic-label { font-size:11px; font-weight:600; color:var(--orange); text-transform:uppercase; letter-spacing:.06em; margin-bottom:5px; }
+.topic-text  { font-size:20px; font-weight:700; color:var(--text); line-height:1.3; }
+.topic-empty { font-size:14px; color:var(--text-muted); }
+@keyframes topicFlash { 0%{background:var(--orange-light)} 100%{background:var(--surface)} }
+.topic-flash { animation:topicFlash .5s ease forwards; }
 
-  .history-item { padding:8px 0; border-bottom:1px solid var(--border-light); }
-  .history-item:last-child { border-bottom:none; }
-  .history-time { font-family:var(--mono); font-size:11px; color:var(--text-muted); }
-  .history-summary { font-size:12px; color:var(--text-sec); margin-top:2px; line-height:1.5; }
-  .empty-state { font-size:13px; color:var(--text-muted); padding:8px 0; }
+/* ===== GOAL BLOCK（会議の狙い推測） ===== */
+.goal-block {
+  padding:9px 12px; border-radius:var(--radius);
+  background:rgba(168,85,247,.07); border:1px solid rgba(168,85,247,.2);
+  margin-bottom:14px;
+}
+.goal-label {
+  font-size:10px; font-weight:700; color:rgba(168,85,247,.85);
+  text-transform:uppercase; letter-spacing:.06em; margin-bottom:5px;
+  display:flex; align-items:center; gap:6px;
+}
+.goal-text { font-size:13px; color:var(--text-sec); line-height:1.65; }
 
-  /* 設定モーダル */
-  .modal-overlay { display:none; position:fixed; inset:0; background:rgba(0,0,0,.3); z-index:1000; justify-content:center; align-items:center; }
-  .modal-overlay.open { display:flex; }
-  .modal { background:var(--surface); border-radius:16px; padding:28px; width:480px; max-width:90vw; box-shadow:0 20px 60px rgba(0,0,0,.15); }
-  .modal h2 { font-size:16px; font-weight:700; margin-bottom:16px; }
-  .modal label { display:block; font-size:13px; font-weight:500; color:var(--text-sec); margin-bottom:6px; }
-  .modal input[type=password], .modal input[type=number] { width:100%; padding:8px 12px; border:1px solid var(--border); border-radius:8px; font-size:13px; font-family:var(--mono); }
-  .modal input:focus { outline:none; border-color:var(--accent); box-shadow:0 0 0 3px rgba(37,99,235,.1); }
-  .modal .field { margin-bottom:16px; }
-  .modal .hint { font-size:11px; color:var(--text-muted); margin-top:4px; }
-  .modal .hint a { color:var(--accent); }
-  .modal .section-title { font-size:12px; font-weight:600; color:var(--text-muted); text-transform:uppercase; letter-spacing:.05em; margin-bottom:12px; margin-top:4px; border-top:1px solid var(--border-light); padding-top:16px; }
-  .modal .actions { display:flex; gap:8px; justify-content:flex-end; margin-top:20px; }
-  .key-status { font-size:12px; padding:4px 8px; border-radius:6px; margin-top:8px; }
-  .key-ok { background:var(--green-light); color:var(--green); }
-  .key-missing { background:var(--yellow-light); color:var(--yellow); }
+/* ===== GUESS BADGE（AI推測・AI先読みラベル） ===== */
+.guess-badge {
+  font-size:9px; font-weight:700; letter-spacing:.04em; padding:1px 6px;
+  border-radius:8px; background:rgba(168,85,247,.2); color:rgba(168,85,247,.9);
+  text-transform:none; flex-shrink:0;
+}
 
-  @media(max-width:1024px) { .main{grid-template-columns:1fr 1fr} }
-  @media(max-width:768px) { .main{grid-template-columns:1fr; padding:12px 16px} .header,.controls{padding-left:16px;padding-right:16px} }
+/* ===== PENDING DECISIONS（先回り予測） ===== */
+.pending-section { margin-bottom:14px; }
+.pending-list { list-style:none; }
+.pending-item {
+  display:flex; gap:8px; align-items:flex-start;
+  font-size:12px; color:var(--text-sec);
+  padding:5px 0 5px 10px;
+  border-left:2px solid rgba(168,85,247,.5);
+  margin-bottom:5px; line-height:1.5;
+}
+.pending-item:last-child { margin-bottom:0; }
+.pending-icon { flex-shrink:0; opacity:.7; }
+
+/* ===== KEY POINTS ===== */
+.points-section { margin-bottom:14px; }
+.points-list { list-style:none; }
+.points-list li {
+  font-size:13px; color:var(--text); padding:5px 0; line-height:1.5;
+  border-bottom:1px solid var(--border-light);
+}
+.points-list li:last-child { border-bottom:none; }
+.si { font-size:14px; flex-shrink:0; margin-top:1px; line-height:1; }
+.pt { flex:1; }
+
+/* ===== DECISIONS ===== */
+.decisions-section { margin-bottom:14px; }
+.decision-card {
+  background:var(--green-light); border:1px solid rgba(34,197,94,.2);
+  border-radius:8px; padding:9px 12px; margin-bottom:7px;
+}
+.decision-card:last-child { margin-bottom:0; }
+.conf-badge { font-size:10px; padding:2px 7px; border-radius:10px; font-weight:600; white-space:nowrap; flex-shrink:0; margin-top:1px; }
+.conf-h { background:rgba(34,197,94,.3);  color:#4ade80; }
+.conf-m { background:rgba(245,158,11,.3); color:#fcd34d; }
+.conf-l { background:rgba(239,68,68,.3);  color:#f87171; }
+.d-text { font-size:13px; color:var(--text); flex:1; line-height:1.5; }
+
+/* ===== EXPANDABLE ITEMS ===== */
+.exp-header {
+  display:flex; align-items:flex-start; gap:8px; width:100%;
+}
+.exp-item[onclick] { cursor:pointer; }
+.exp-item[onclick] .exp-header:hover {
+  background:rgba(255,255,255,.03); border-radius:5px;
+  margin:0 -6px; padding:0 6px;
+}
+.exp-toggle {
+  font-size:9px; color:var(--text-muted); flex-shrink:0;
+  margin-left:2px; line-height:2; transition:transform .2s ease;
+  padding:0 2px; user-select:none;
+}
+.exp-item.open .exp-toggle { transform:rotate(180deg); }
+.exp-body {
+  max-height:0; overflow:hidden;
+  transition:max-height .25s ease, opacity .2s ease;
+  opacity:0;
+}
+.exp-item.open .exp-body { max-height:200px; opacity:1; }
+.exp-evidence {
+  font-size:12px; color:var(--text-sec); line-height:1.75;
+  border-left:2px solid var(--border);
+  padding:6px 8px 2px 10px; margin-top:5px;
+}
+.exp-when {
+  font-size:10px; font-family:var(--mono); color:var(--text-muted);
+  margin-bottom:3px;
+}
+/* item.refs（チャプター横断の補足） */
+.ref-entries { margin-top:6px; display:flex; flex-direction:column; gap:4px; }
+.ref-entry {
+  display:flex; gap:6px; align-items:flex-start;
+  font-size:11px; color:var(--text-sec); line-height:1.6;
+  padding:3px 0 3px 8px; border-left:2px solid rgba(168,85,247,.4);
+}
+.ref-entry-sec {
+  font-size:9px; font-weight:700; letter-spacing:.04em; text-transform:uppercase;
+  color:rgba(168,85,247,.8); white-space:nowrap; flex-shrink:0; margin-top:2px;
+  background:rgba(168,85,247,.12); padding:1px 5px; border-radius:4px;
+}
+.ref-entry-note { flex:1; }
+
+/* ===== ACTIONS ===== */
+.actions-section { margin-bottom:14px; }
+.action-item {
+  display:flex; align-items:flex-start; gap:8px; padding:7px 10px 7px 12px;
+  border-left:3px solid var(--orange); margin-bottom:6px; border-radius:0 6px 6px 0;
+  background:var(--orange-light); font-size:13px; color:var(--text); line-height:1.5;
+}
+.action-item:last-child { margin-bottom:0; }
+.a-arrow { color:var(--orange); flex-shrink:0; font-weight:700; }
+
+/* ===== TIME CHIPS ===== */
+.item-time { font-size:10px; font-family:var(--mono); white-space:nowrap; margin-left:auto; padding-left:8px; flex-shrink:0; font-weight:500; }
+.t-fresh  { color:var(--red); }
+.t-recent { color:var(--orange); }
+.t-old    { color:var(--text-muted); opacity:.5; }
+
+/* ===== NOW BAR ===== */
+.now-bar {
+  display:flex; flex-direction:column; gap:4px;
+  background:rgba(59,130,246,.1); border:1px solid rgba(59,130,246,.2);
+  border-radius:8px; padding:8px 12px; margin-bottom:12px; font-size:13px;
+}
+.now-row1    { display:flex; align-items:center; gap:8px; flex-wrap:wrap; }
+.now-speaker { font-weight:600; color:var(--accent); white-space:nowrap; }
+.now-sep     { color:var(--text-muted); }
+.now-kp      { color:var(--text-sec); flex:1; }
+.now-live    { font-size:12px; color:var(--text-muted); font-style:italic; padding-left:2px; line-height:1.4; }
+.now-live::after { content:"▋"; animation:blink .8s step-end infinite; color:var(--accent); }
+@keyframes blink { 0%,100%{opacity:1} 50%{opacity:0} }
+
+/* kp-active: マッチした論点をリアルタイムハイライト */
+.kp-active {
+  background:var(--accent-light) !important;
+  border-left:3px solid var(--accent) !important;
+  border-radius:5px;
+  padding-left:8px !important; margin-left:-4px;
+}
+
+/* ===== SECTION GROUPS (議題フェーズ別グループ) ===== */
+.section-group { padding:0; border-bottom:1px solid var(--border); margin-bottom:2px; }
+.section-group:last-child { border-bottom:none; margin-bottom:0; }
+.section-header {
+  font-size:10px; font-weight:700; letter-spacing:.06em; text-transform:uppercase;
+  color:var(--text-muted); padding:8px 0 3px; user-select:none;
+}
+.section-items { list-style:none; padding:0 0 5px 10px; }
+.section-items li { border-bottom:1px solid var(--border-light); }
+.section-items li:last-child { border-bottom:none; }
+
+/* ===== FADE-IN ANIMATION ===== */
+@keyframes fadeInUp {
+  from { opacity:0; transform:translateY(5px); }
+  to   { opacity:1; transform:translateY(0); }
+}
+.item-new { animation:fadeInUp .4s ease forwards; }
+
+/* ===== SKELETON UI ===== */
+@keyframes shimmer {
+  0%   { background-position:-200px 0; }
+  100% { background-position:200px 0; }
+}
+.skel {
+  background:linear-gradient(90deg, var(--surface-alt) 25%, var(--border) 50%, var(--surface-alt) 75%);
+  background-size:400px 100%; animation:shimmer 1.5s infinite;
+  border-radius:6px; height:14px; margin-bottom:8px;
+}
+.skel.w90{width:90%} .skel.w75{width:75%} .skel.w60{width:60%} .skel.w80{width:80%}
+.skel.tall{height:20px}
+.skel-wrap { padding:4px 0; }
+
+/* ===== RIGHT PANE ===== */
+.status-counter { display:grid; grid-template-columns:repeat(4,1fr); gap:6px; margin-bottom:14px; }
+.counter-chip {
+  background:var(--surface); border:1px solid var(--border);
+  border-radius:8px; padding:8px 4px; text-align:center; font-size:12px; font-weight:600;
+}
+.counter-chip .ci { font-size:15px; display:block; margin-bottom:2px; }
+.counter-chip .cn { color:var(--text); display:block; font-family:var(--mono); font-size:13px; }
+
+.summary-section { margin-bottom:14px; }
+.summary-text { font-size:12px; color:var(--text-sec); line-height:1.8; }
+
+/* ===== SUMMARY REFS（横断議録） ===== */
+.summary-refs { margin-top:8px; }
+.sumref-item {
+  border:1px solid var(--border); border-radius:6px;
+  margin-bottom:6px; overflow:hidden;
+}
+.sumref-item:last-child { margin-bottom:0; }
+.sumref-header {
+  display:flex; align-items:center; gap:7px;
+  padding:7px 10px; cursor:pointer; user-select:none;
+  background:var(--surface);
+}
+.sumref-header:hover { background:rgba(255,255,255,.04); }
+.sumref-icon  { font-size:13px; flex-shrink:0; }
+.sumref-label { font-size:12px; font-weight:600; color:var(--text); flex:1; line-height:1.4; }
+.sumref-count { font-size:10px; font-family:var(--mono); color:var(--text-muted); white-space:nowrap; flex-shrink:0; }
+.sumref-toggle {
+  font-size:9px; color:var(--text-muted); flex-shrink:0;
+  margin-left:2px; transition:transform .2s ease; padding:0 2px;
+}
+.sumref-item.open .sumref-toggle { transform:rotate(180deg); }
+.sumref-body {
+  max-height:0; overflow:hidden;
+  transition:max-height .3s ease, opacity .2s ease;
+  opacity:0; background:var(--surface-alt);
+}
+.sumref-item.open .sumref-body { max-height:600px; opacity:1; }
+.sumref-chapters { padding:8px 10px 10px; display:flex; flex-direction:column; gap:8px; }
+.ref-chapter { }
+.ref-chapter-title {
+  font-size:10px; font-weight:700; letter-spacing:.05em; text-transform:uppercase;
+  color:var(--text-muted); margin-bottom:4px; padding-left:2px;
+}
+.ref-chapter-items { list-style:none; padding:0 0 0 6px; }
+.ref-chapter-row {
+  display:flex; align-items:flex-start; gap:6px;
+  font-size:12px; color:var(--text); padding:3px 0; line-height:1.5;
+  border-bottom:1px solid var(--border-light);
+}
+.ref-chapter-row:last-child { border-bottom:none; }
+.ref-row-text  { flex:1; }
+.ref-row-ev {
+  font-size:11px; color:var(--text-muted); line-height:1.6;
+  border-left:2px solid var(--border); padding:3px 6px 1px 8px; margin-top:3px;
+}
+
+.parking-section { margin-bottom:14px; }
+.parking-list { list-style:none; }
+.parking-item {
+  display:flex; gap:8px; align-items:flex-start;
+  font-size:12px; color:var(--text-muted);
+  padding:5px 0 5px 10px; border-left:2px solid var(--purple);
+  margin-bottom:5px; line-height:1.5;
+}
+.parking-item:last-child { margin-bottom:0; }
+
+.history-section { margin-bottom:14px; }
+.history-item { padding:5px 0; border-bottom:1px solid var(--border-light); }
+.history-item:last-child { border-bottom:none; }
+.history-time { font-family:var(--mono); font-size:10px; color:var(--text-muted); }
+.history-sum  { font-size:11px; color:var(--text-sec); margin-top:2px; line-height:1.5; }
+
+.empty-state { font-size:12px; color:var(--text-muted); padding:3px 0; }
+
+/* ===== MODAL ===== */
+.modal-overlay { display:none; position:fixed; inset:0; background:rgba(0,0,0,.65); z-index:1000; justify-content:center; align-items:center; }
+.modal-overlay.open { display:flex; }
+.modal {
+  background:var(--surface); border:1px solid var(--border); border-radius:16px;
+  padding:26px; width:480px; max-width:90vw; max-height:88vh; overflow-y:auto;
+  box-shadow:0 24px 64px rgba(0,0,0,.6);
+}
+.modal h2 { font-size:16px; font-weight:700; margin-bottom:16px; color:var(--text); }
+.modal label { display:block; font-size:13px; font-weight:500; color:var(--text-sec); margin-bottom:6px; }
+.modal input[type=password], .modal input[type=number], .modal select {
+  width:100%; padding:8px 12px; border:1px solid var(--border);
+  border-radius:8px; font-size:13px; font-family:var(--mono);
+  background:var(--surface-alt); color:var(--text); outline:none;
+}
+.modal input:focus, .modal select:focus { border-color:var(--accent); box-shadow:0 0 0 3px rgba(59,130,246,.15); }
+.modal select option { background:var(--surface-alt); }
+.field { margin-bottom:14px; }
+.hint { font-size:11px; color:var(--text-muted); margin-top:4px; }
+.hint a { color:var(--accent); }
+.modal-section { font-size:11px; font-weight:600; color:var(--text-muted); text-transform:uppercase; letter-spacing:.05em; margin:16px 0 12px; border-top:1px solid var(--border); padding-top:16px; }
+.modal-actions { display:flex; gap:8px; justify-content:flex-end; margin-top:20px; }
+.key-status { font-size:12px; padding:4px 8px; border-radius:6px; margin-top:8px; display:inline-block; }
+.key-ok      { background:var(--green-light); color:var(--green); }
+.key-missing { background:rgba(245,158,11,.15); color:var(--yellow); }
+.mbtn { border:none; border-radius:8px; padding:7px 16px; font-size:13px; font-weight:600; font-family:var(--font); cursor:pointer; }
+.mbtn-save   { background:var(--accent); color:#fff; }
+.mbtn-save:hover { background:#2563eb; }
+.mbtn-cancel { background:var(--surface-alt); color:var(--text-sec); border:1px solid var(--border); }
+.mbtn-cancel:hover { background:var(--border); color:var(--text); }
+
+/* ===== MOBILE BAR ===== */
+.mobile-bar {
+  display:none; position:fixed; bottom:0; left:0; right:0;
+  background:var(--surface); border-top:1px solid var(--border);
+  padding:9px 16px; gap:12px; align-items:center; z-index:90;
+}
+.mob-topic  { flex:1; font-size:13px; font-weight:600; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+.mob-counts { font-size:12px; color:var(--text-sec); white-space:nowrap; }
+
+@media(max-width:768px) {
+  .main { grid-template-columns:1fr; height:auto; overflow:visible; padding-bottom:70px; }
+  .pane-focus   { border-right:none; border-bottom:1px solid var(--border); }
+  .mobile-bar   { display:flex; }
+  html,body     { overflow:auto; height:auto; }
+  .main         { flex:none; }
+}
+
+/* ===== AUDIO SOURCE TOGGLE ===== */
+.audiosrc-btn {
+  font-size:11px; padding:3px 9px; border-radius:20px; border:1px solid var(--border);
+  background:var(--surface-alt); color:var(--text-sec); cursor:pointer; white-space:nowrap;
+  transition:all .15s; font-family:var(--font); font-weight:500;
+}
+.audiosrc-btn:hover { border-color:var(--accent); color:var(--text); }
+.audiosrc-btn.system { border-color:var(--green); color:var(--green); background:var(--green-light); }
+
+/* ===== ENGINE BADGE ===== */
+.engine-badge {
+  font-size:10px; padding:2px 7px; border-radius:20px;
+  font-weight:600; border:1px solid; white-space:nowrap; cursor:default;
+}
+.engine-badge.whisperx { color:var(--accent); border-color:var(--accent); background:var(--accent-light); }
+.engine-badge.moonshine { color:var(--purple); border-color:var(--purple); background:var(--purple-light); }
+.moonshine-loading {
+  font-size:11px; color:var(--purple); padding:3px 8px;
+  background:var(--purple-light); border-radius:6px; display:inline-block;
+  animation: pulse-opacity 1.2s ease-in-out infinite;
+}
+@keyframes pulse-opacity { 0%,100%{opacity:1} 50%{opacity:.4} }
 </style>
 </head>
 <body>
 
-<div class="header">
+<!-- ===== HEADER ===== -->
+<header class="header">
   <div class="header-left">
     <span class="logo">🧠 セカンドブレーン</span>
-    <span class="phase-badge">WhisperX</span>
+    <span id="serverBadge" class="server-badge offline">未接続</span>
+    <span id="engineBadge" class="engine-badge whisperx">WhisperX</span>
+  </div>
+  <div class="header-center">
+    <button id="btnAudioSrc" class="audiosrc-btn" onclick="toggleAudioSrc()" title="音声ソース切替">🎤 マイク</button>
+    <button id="btnRec"  class="btn-rec start" onclick="startRecording()">🎤 録音開始</button>
+    <button id="btnStop" class="btn-rec stop"  onclick="stopRecording()" style="display:none">⏹ 停止</button>
+    <span id="recInd" class="rec-indicator"><span class="pulse-dot"></span>REC</span>
+    <span id="timer" class="timer">00:00</span>
+    <div id="volMini" class="vol-mini">
+      <div class="vol-bar-mini"><div id="volFillMini" class="vol-fill-mini"></div></div>
+    </div>
   </div>
   <div class="header-right">
-    <span id="statusBadge" class="status-badge status-idle">⏸ 停止中</span>
-    <span id="timer" class="timer">00:00</span>
-    <button class="btn-settings" onclick="openSettings()" title="設定">⚙</button>
+    <button id="btnAnalyze" class="btn-analyze" onclick="analyzeNow()" disabled>🔍 分析</button>
+    <button class="btn-icon" id="btnTranscript" onclick="toggleTranscript()" title="文字起こし">📝</button>
+    <button class="btn-icon" onclick="exportMd()" title="Markdownコピー">⬇ MD</button>
+    <button class="btn-icon" onclick="resetAll()" title="リセット">🗑</button>
+    <button class="btn-icon" onclick="openSettings()" title="設定">⚙</button>
   </div>
-</div>
+</header>
 
-<div class="controls">
-  <button id="btnRec" class="btn btn-rec" onclick="startRecording()">🎤 録音開始</button>
-  <button id="btnStop" class="btn btn-stop" onclick="stopRecording()" style="display:none">⏹ 停止</button>
-  <button id="btnAnalyze" class="btn btn-analyze" onclick="analyzeNow()" disabled>🔍 今すぐ分析</button>
-  <button class="btn btn-outline" onclick="exportMd()">📋 コピー</button>
-  <button class="btn btn-outline" onclick="resetAll()">🗑 リセット</button>
-  <div class="controls-right">
-    <label class="auto-label"><input type="checkbox" id="autoAnalyze" checked> 自動分析（<span id="thresholdLabel">200</span>字ごと）</label>
-  </div>
-</div>
-
+<!-- error bar -->
 <div id="errorBar" class="error-bar">
   <span id="errorText"></span>
   <button onclick="hideError()">✕</button>
 </div>
 
-<div class="main">
-  <!-- 左ペイン: 文字起こし -->
-  <div class="card">
-    <div class="card-header">
-      <span class="card-title">📝 文字起こし</span>
-      <span id="charCount" class="card-meta">0文字</span>
-    </div>
-    <div class="card-body" id="transcriptBody" style="max-height:calc(100vh - 240px)">
-      <div id="transcriptContent" class="transcript-empty">
-        <div>
-          <div class="transcript-empty-icon">🎤</div>
-          <p>録音を開始してください</p>
-          <p class="sub">WhisperXがチャンクごとに文字起こし＋話者分離します</p>
-        </div>
-      </div>
-    </div>
-    <div id="progressWrap" class="progress-bar-wrap">
-      <div class="progress-track"><div id="progressFill" class="progress-fill" style="width:0%"></div></div>
-      <div id="progressLabel" class="progress-label">次の文字起こしまで --秒</div>
-    </div>
-  </div>
-
-  <!-- 中央ペイン: 分析結果 -->
-  <div class="card">
-    <div class="card-header">
-      <span class="card-title">🔍 分析結果</span>
-      <span id="analysisCount" class="card-meta">0回分析</span>
-    </div>
-    <div class="card-body" style="max-height:calc(100vh - 240px)">
-      <div class="topic-card">
-        <div class="topic-label">📢 現在の議題</div>
-        <div id="currentTopic" class="topic-text">（録音開始後に自動検出）</div>
-      </div>
-      <div><div class="card-title" style="margin-bottom:6px">📄 要約</div>
-        <div id="summaryText" class="summary-text">分析結果がここに表示されます</div>
-      </div>
-      <div><div class="card-title" style="margin-bottom:8px">💡 論点</div>
-        <ul id="keyPoints" class="points-list"><li class="empty-state">（検出された論点がここに表示されます）</li></ul>
-      </div>
-    </div>
-  </div>
-
-  <!-- 右ペイン: 決定・アクション -->
-  <div class="card">
-    <div class="card-header"><span class="card-title">📌 決定・アクション</span></div>
-    <div class="card-body" style="max-height:calc(100vh - 240px)">
-      <div class="decision-section">
-        <div class="decision-label">📌 決定事項</div>
-        <ul id="decisions" class="decision-list"><li class="empty-state">（決定事項が検出されると表示）</li></ul>
-      </div>
-      <div class="action-section">
-        <div class="action-label">☑ アクションアイテム</div>
-        <ul id="actionItems" class="action-list"><li class="empty-state">（アクションが検出されると表示）</li></ul>
-      </div>
-      <div><div class="card-title" style="margin-bottom:8px">🕐 分析履歴</div>
-        <div id="analysisHistory"><div class="empty-state">分析結果の履歴がここに蓄積されます</div></div>
-      </div>
-    </div>
-  </div>
+<!-- chunk progress -->
+<div id="progressWrap" class="progress-wrap">
+  <div class="progress-track"><div id="progressFill" class="progress-fill" style="width:0%"></div></div>
+  <div id="progressLabel" class="progress-label">次の文字起こしまで --秒</div>
 </div>
 
-<!-- 設定モーダル -->
+<!-- transcript panel (collapsible) -->
+<div id="transcriptPanel" class="transcript-panel">
+  <div id="transcriptContent"></div>
+</div>
+
+<!-- ===== MAIN 2-PANE ===== -->
+<main class="main">
+
+  <!-- 左ペイン: フォーカスエリア (70%) -->
+  <div class="pane-focus">
+
+    <!-- nowBar: Web Speech APIによるリアルタイム話者×論点表示 -->
+    <div id="nowBar" class="now-bar" style="display:none">
+      <div class="now-row1">
+        <span id="nowSpeaker" class="now-speaker"></span>
+        <span id="nowKPWrap" style="display:none">
+          <span class="now-sep">→</span>
+          <span id="nowKP" class="now-kp"></span>
+        </span>
+      </div>
+      <div id="nowLiveText" class="now-live" style="display:none"></div>
+    </div>
+
+    <!-- 現在の議題 -->
+    <div id="topicBlock" class="topic-block">
+      <div class="topic-label">🔥 現在の議題</div>
+      <div id="currentTopic" class="topic-empty">録音を開始すると自動検出されます</div>
+    </div>
+
+    <!-- 会議の狙い（推測） -->
+    <div id="goalBlock" class="goal-block" style="display:none">
+      <div class="goal-label">🎯 この会議の狙い <span class="guess-badge">AI推測</span></div>
+      <div id="meetingGoal" class="goal-text"></div>
+    </div>
+
+    <!-- 議論中の要点 -->
+    <div class="points-section">
+      <div class="sec-title">💬 議論中の要点</div>
+      <ul id="keyPoints" class="points-list">
+        <li class="empty-state">（分析後に表示されます）</li>
+      </ul>
+    </div>
+
+    <!-- 決定事項 -->
+    <div class="decisions-section">
+      <div class="sec-title">✅ 決定事項</div>
+      <div id="decisions">
+        <div class="empty-state">（決定事項が検出されると表示）</div>
+      </div>
+    </div>
+
+    <!-- やること -->
+    <div class="actions-section">
+      <div class="sec-title">☑ やること</div>
+      <div id="actionItems">
+        <div class="empty-state">（タスクが検出されると表示）</div>
+      </div>
+    </div>
+
+  </div><!-- /pane-focus -->
+
+  <!-- 右ペイン: コンテキスト (30%) -->
+  <div class="pane-context">
+
+    <!-- ステータスカウンター -->
+    <div class="status-counter">
+      <div class="counter-chip"><span class="ci">💡</span><span id="cntIdea" class="cn">0</span></div>
+      <div class="counter-chip"><span class="ci">❓</span><span id="cntQ" class="cn">0</span></div>
+      <div class="counter-chip"><span class="ci">✅</span><span id="cntOk" class="cn">0</span></div>
+      <div class="counter-chip"><span class="ci">⚠️</span><span id="cntWarn" class="cn">0</span></div>
+    </div>
+
+    <!-- 全体の流れ（要約） -->
+    <div class="summary-section">
+      <div class="sec-title">📄 全体の流れ</div>
+      <div id="summaryText" class="summary-text empty-state">（分析後に表示）</div>
+      <!-- 横断議録（複数チャプターにまたがる関連議録） -->
+      <div id="summaryRefs" class="summary-refs"></div>
+    </div>
+
+    <!-- まだ決めていないこと（先回り予測） -->
+    <div class="pending-section">
+      <div class="sec-title">🔮 まだ決めていないこと <span class="guess-badge">AI先読み</span></div>
+      <ul id="pendingDecisions" class="pending-list">
+        <li class="empty-state">（推測されると表示）</li>
+      </ul>
+    </div>
+
+    <!-- パーキングロット -->
+    <div class="parking-section">
+      <div class="sec-title">🅿 保留・未解決の論点</div>
+      <ul id="openIssues" class="parking-list">
+        <li class="empty-state">（保留事項が検出されると表示）</li>
+      </ul>
+    </div>
+
+    <!-- 分析履歴 -->
+    <div class="history-section">
+      <div class="sec-title">🕐 分析履歴 <span id="analysisCount" style="font-weight:400;color:var(--text-muted);font-size:10px">（0回）</span></div>
+      <div id="analysisHistory"><div class="empty-state">（履歴がここに蓄積されます）</div></div>
+    </div>
+
+  </div><!-- /pane-context -->
+
+</main>
+
+<!-- mobile minimal bar -->
+<div class="mobile-bar">
+  <span class="mob-topic"  id="mobTopic">録音を開始してください</span>
+  <span class="mob-counts" id="mobCounts">💡0 ❓0 ✅0 ⚠️0</span>
+</div>
+
+<!-- ===== SETTINGS MODAL ===== -->
 <div id="settingsModal" class="modal-overlay" onclick="if(event.target===this)closeSettings()">
   <div class="modal">
     <h2>⚙ 設定</h2>
 
     <div class="field">
-      <label>Anthropic API キー</label>
-      <input type="password" id="apiKeyInput" placeholder="sk-ant-api03-...">
-      <div class="hint">APIキーはlocalStorageに保存されます（サーバー経由でのみ使用）</div>
-      <div id="keyStatus"></div>
-    </div>
-
-    <div class="field">
-      <label>Claude 分析閾値（文字数）</label>
+      <label>自動分析の閾値（文字数）</label>
       <input type="number" id="thresholdInput" value="200" min="50" max="2000" step="50">
-      <div class="hint">この文字数ごとにClaudeで自動分析します（50〜2000）</div>
+      <div class="hint">この文字数ごとに自動分析します（50〜2000）</div>
     </div>
 
-    <div class="section-title">WhisperX 設定</div>
+    <div class="field">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:4px">
+        <label style="margin-bottom:0">自動分析</label>
+        <label style="display:flex;align-items:center;gap:8px;cursor:pointer;margin-bottom:0">
+          <input type="checkbox" id="autoAnalyzeToggle" checked style="width:16px;height:16px;accent-color:var(--accent)">
+          <span id="autoAnalyzeLabel" style="font-size:12px;color:var(--text-sec)">オン</span>
+        </label>
+      </div>
+      <div class="hint">録音中に閾値を超えると自動で分析を実行します</div>
+    </div>
 
     <div class="field">
-      <label>HuggingFace Token（話者分離に必要）</label>
-      <input type="password" id="hfTokenInput" placeholder="hf_xxxxxxxxxxxx">
-      <div class="hint">
-        未設定でも文字起こしのみ動作します。話者分離を有効にするには下記モデルの利用規約に同意してトークンを取得してください。
+      <label>専門用語辞書（文字起こし精度向上）</label>
+      <textarea id="vocabInput" rows="4" placeholder="1行に1語ずつ入力&#10;例：&#10;BSL&#10;PMO&#10;DX推進事業&#10;WhisperX" style="width:100%;resize:vertical;background:var(--surface-alt);border:1px solid var(--border);border-radius:6px;padding:8px;color:var(--text);font-size:13px;font-family:inherit;box-sizing:border-box;margin-top:4px"></textarea>
+      <div class="hint">WhisperXのinitial_promptに設定されます。誤認識されやすい固有名詞・社名・略語を登録してください</div>
+    </div>
+
+    <div class="modal-section">文字起こしエンジン</div>
+
+    <div class="field">
+      <label>エンジン選択</label>
+      <select id="engineSelect" style="margin-top:4px;width:100%;background:var(--surface-alt);border:1px solid var(--border);border-radius:6px;padding:7px 8px;color:var(--text);font-size:13px;font-family:inherit">
+        <option value="whisperx">🖥 WhisperX（WSLサーバー・日本語高精度）</option>
+        <option value="moonshine-ja">🌙 Moonshine JA（WSLサーバー・日本語軽量）</option>
+        <option value="moonshine">🌙 Moonshine（ブラウザ内・英語のみ）</option>
+      </select>
+      <div class="hint">Moonshine JA は WSL サーバーで動作。初回起動時にモデル（~190MB）が自動ダウンロードされます</div>
+    </div>
+
+    <div class="field" id="moonshineModelField">
+      <label>Moonshine モデル</label>
+      <select id="moonshineModelInput" style="margin-top:4px;width:100%;background:var(--surface-alt);border:1px solid var(--border);border-radius:6px;padding:7px 8px;color:var(--text);font-size:13px;font-family:inherit">
+        <option value="model/tiny">model/tiny（英語・軽量 ~150MB）</option>
+        <option value="model/base">model/base（英語・高精度 ~350MB）</option>
+      </select>
+      <div class="hint">初回のみブラウザ内にダウンロードします。日本語モデルは未公開のため英語のみ対応</div>
+    </div>
+
+    <div class="modal-section">WhisperX 設定</div>
+
+    <div class="field">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px">
+        <label style="margin-bottom:0">話者分離（HFトークン必須）</label>
+        <label style="display:flex;align-items:center;gap:8px;cursor:pointer;margin-bottom:0">
+          <input type="checkbox" id="diarizeToggle" style="width:16px;height:16px;accent-color:var(--accent)">
+          <span id="diarizeToggleLabel" style="font-size:12px;color:var(--text-sec)">オフ</span>
+        </label>
       </div>
+      <label>HuggingFace Token</label>
+      <input type="password" id="hfTokenInput" placeholder="hf_xxxxxxxxxxxx">
+      <div class="hint">話者分離を使用する場合は下記モデルの利用規約への同意が必要です</div>
       <div id="hfStatus"></div>
     </div>
 
     <div class="field">
       <label>Pyannote モデル</label>
-      <input type="text" id="diarizeModelInput" placeholder="pyannote/speaker-diarization-3.1">
+      <select id="diarizeModelInput">
+        <option value="pyannote/speaker-diarization-3.1">pyannote/speaker-diarization-3.1（推奨）</option>
+        <option value="pyannote/speaker-diarization-community-1">pyannote/speaker-diarization-community-1</option>
+      </select>
       <div class="hint">
-        利用規約への同意が必要です →
-        <a href="https://huggingface.co/pyannote/speaker-diarization-3.1" target="_blank">speaker-diarization-3.1</a>（推奨）
-        または
-        <a href="https://huggingface.co/pyannote/speaker-diarization-community-1" target="_blank">community-1</a>（新）
+        <a href="https://huggingface.co/pyannote/speaker-diarization-3.1" target="_blank">3.1 の利用規約</a> ／
+        <a href="https://huggingface.co/pyannote/speaker-diarization-community-1" target="_blank">community-1 の利用規約</a>
       </div>
     </div>
 
     <div class="field">
       <label>チャンク間隔（秒）</label>
-      <input type="number" id="chunkSecondsInput" value="15" min="5" max="60" step="5">
-      <div class="hint">この秒数ごとに音声をWhisperXへ送信します（5〜60秒）。長いほど精度↑・遅延↑</div>
+      <input type="number" id="chunkSecondsInput" value="30" min="5" max="120" step="5">
+      <div class="hint">この秒数ごとに音声をWhisperXへ送信します（5〜120秒）</div>
     </div>
 
-    <div class="actions">
-      <button class="btn btn-outline" onclick="closeSettings()">キャンセル</button>
-      <button class="btn btn-analyze" onclick="saveSettings()">保存</button>
+    <div class="modal-section">分析 LLM（Azure OpenAI）</div>
+
+    <div class="field">
+      <label>Azure エンドポイント</label>
+      <input type="url" id="azureEndpointInput" placeholder="https://YOUR-RESOURCE.openai.azure.com">
+      <div class="hint">Azure ポータル → リソース → エンドポイント</div>
+    </div>
+    <div class="field">
+      <label>デプロイ名</label>
+      <input type="text" id="azureDeploymentInput" placeholder="gpt-4o / gpt-4o-mini など">
+      <div class="hint">Azure AI Studio でのデプロイ名を入力</div>
+    </div>
+    <div class="field">
+      <label>Azure API キー</label>
+      <input type="password" id="azureApiKeyInput" placeholder="Azure OpenAI のキー1またはキー2">
+      <div id="keyStatus"></div>
+    </div>
+    <div class="field">
+      <label>API バージョン（省略可）</label>
+      <input type="text" id="azureApiVersionInput" placeholder="2025-01-01-preview">
+      <div class="hint">空欄の場合は 2025-01-01-preview を使用</div>
+    </div>
+
+    <div class="modal-actions">
+      <button class="mbtn mbtn-cancel" onclick="closeSettings()">キャンセル</button>
+      <button class="mbtn mbtn-save"   onclick="saveSettings()">保存</button>
     </div>
   </div>
 </div>
 
 <script>
 // ============================================================
+// localStorage マイグレーション
+// ============================================================
+(function() {
+  const m = localStorage.getItem("sb_diarize_model");
+  if (!m || m === "pyannote/speaker-diarization-community-1") {
+    localStorage.setItem("sb_diarize_model", "pyannote/speaker-diarization-3.1");
+  }
+})();
+
+// ============================================================
 // State
 // ============================================================
 let isRecording = false, isAnalyzing = false, isTranscribing = false;
-let mediaRecorder = null, audioChunks = [], chunkTimer = null;
-let chunkStartTime = null;   // チャンク開始時刻（進行バー用）
+let _recStream = null, _curRecorder = null, _chunkBuf = [], _blobQueue = [];
+let _audioCtx = null, _analyserNode = null, _volRafId = null;
+let _sessionId = null;
+// Web Speech API（リアルタイムトピックマッチ用）
+let _wsr = null, _wsrSupported = false;
+// 無音自動停止
+let _lastSpeechTime = null, _silenceCheckInterval = null;
+// Moonshine — localStorage マイグレーション（旧モデルIDを修正）
+(function() {
+  const validModels = ["model/tiny", "model/base"];
+  const stored = localStorage.getItem("sb_moonshine_model");
+  if (stored && !validModels.includes(stored)) {
+    localStorage.setItem("sb_moonshine_model", "model/tiny");
+  }
+})();
+let transcribeEngine = localStorage.getItem("sb_engine") || "whisperx";
+let _moonshineTranscriber = null, _moonshineLoaded = false, _moonshineSystemStream = null;
+// Audio source
+let audioSource = localStorage.getItem("sb_audio_src") || "mic";
+const SILENCE_TIMEOUT_MS = 3 * 60 * 1000; // 3分無音で自動停止
+let _liveText = "", _lastSpeaker = null, _activeKP = -1;
+let currentMimeType = "audio/webm";
+let chunkStartTime = null;
 let transcript = "", pendingText = "", charsSinceAnalysis = 0;
 let startTime = null, timerInterval = null, chunkProgressInterval = null, analysisCount = 0;
-let THRESHOLD = parseInt(localStorage.getItem("sb_threshold") || "200");
-let CHUNK_SECONDS = parseInt(localStorage.getItem("sb_chunk_seconds") || "15");
-let merged = { current_topic:"", key_points:[], decisions:[], action_items:[], summary:"", speaker_segments:[] };
+let _lastRecTime = "00:00";
+const _itemTimestamps = {};
+let THRESHOLD        = parseInt(localStorage.getItem("sb_threshold")      || "200");
+let CHUNK_SECONDS    = parseInt(localStorage.getItem("sb_chunk_seconds")  || "30");
+let autoAnalyzeEnabled = localStorage.getItem("sb_auto_analyze") !== "0";
+let merged = {
+  current_topic: "", meeting_goal: "", pending_decisions: [], sections: [], decisions: [],
+  action_items: [], open_issues: [], summary: "", summary_refs: [], speaker_segments: []
+};
 let historyLog = [];
 
-// 話者ID正規化（SPEAKER_00 → 話者A）
-const speakerMap = {};
-const SPEAKER_LABELS  = ["話者A","話者B","話者C","話者D","話者E","話者F"];
-const SPEAKER_CLASSES = ["speaker-a","speaker-b","speaker-c","speaker-d","speaker-e","speaker-unknown"];
+// ============================================================
+// Engine badge
+// ============================================================
+function updateEngineBadge() {
+  const badge = document.getElementById("engineBadge");
+  if (transcribeEngine === "moonshine") {
+    badge.textContent = "🌙 Moonshine";
+    badge.className = "engine-badge moonshine";
+  } else if (transcribeEngine === "moonshine-ja") {
+    badge.textContent = "🌙 Moonshine JA";
+    badge.className = "engine-badge moonshine";
+  } else {
+    badge.textContent = "WhisperX";
+    badge.className = "engine-badge whisperx";
+  }
+}
+updateEngineBadge();
 
+// ============================================================
+// Audio source (マイク / システム音声)
+// ============================================================
+function updateAudioSrcBtn() {
+  const btn = document.getElementById("btnAudioSrc");
+  if (audioSource === "system") {
+    btn.textContent = "🖥 システム音声";
+    btn.classList.add("system");
+    document.getElementById("btnRec").textContent = "🖥 録音開始";
+  } else {
+    btn.textContent = "🎤 マイク";
+    btn.classList.remove("system");
+    document.getElementById("btnRec").textContent = "🎤 録音開始";
+  }
+}
+function toggleAudioSrc() {
+  if (isRecording) return; // 録音中は切替不可
+  audioSource = (audioSource === "mic") ? "system" : "mic";
+  localStorage.setItem("sb_audio_src", audioSource);
+  updateAudioSrcBtn();
+}
+updateAudioSrcBtn();
+
+async function _getAudioStream() {
+  if (audioSource === "system") {
+    let displayStream;
+    try {
+      // video:true は仕様上必須（audio-onlyは一部ブラウザ非対応）
+      // systemAudio:"include" → ダイアログで「システム音声を共有」が最初からオン
+      // selfBrowserSurface:"exclude" → このアプリのタブ自体は選択肢に出ない
+      displayStream = await navigator.mediaDevices.getDisplayMedia({
+        video: true,
+        audio: { echoCancellation: false, noiseSuppression: false, sampleRate: 44100 },
+        systemAudio: "include",
+        selfBrowserSurface: "exclude"
+      });
+    } catch(e) {
+      throw new Error("画面共有がキャンセルされました");
+    }
+    const audioTracks = displayStream.getAudioTracks();
+    if (!audioTracks.length) {
+      displayStream.getTracks().forEach(t => t.stop());
+      throw new Error("システム音声が取得できません。共有ダイアログで「システムの音声を共有する」をオンにしてください。");
+    }
+    // ビデオは不要なので即停止
+    displayStream.getVideoTracks().forEach(t => t.stop());
+    const audioStream = new MediaStream(audioTracks);
+    // 画面共有が外部から停止されたら録音も止める
+    audioTracks[0].onended = () => {
+      if (isRecording) { showError("画面共有が停止されたため録音を終了しました"); stopRecording(); }
+    };
+    return audioStream;
+  } else {
+    return await navigator.mediaDevices.getUserMedia({ audio: true });
+  }
+}
+
+// ============================================================
+// Moonshine ブラウザ内文字起こし
+// ============================================================
+// ESモジュールとして動的 import() で読み込む
+let _MoonshineSDK = null;
+async function _loadMoonshine() {
+  if (_moonshineLoaded) return;
+  _MoonshineSDK = await import("https://cdn.jsdelivr.net/npm/@moonshine-ai/moonshine-js@0.1.29/dist/moonshine.min.js");
+  _moonshineLoaded = true;
+}
+
+async function _startMoonshineRecording() {
+  showError("🌙 Moonshine モデルを読み込み中...");
+  try {
+    await _loadMoonshine();
+  } catch(e) {
+    showError("Moonshine 読み込みエラー: " + e.message); return;
+  }
+  if (!_MoonshineSDK || !_MoonshineSDK.MicrophoneTranscriber) {
+    showError("Moonshine SDK の読み込みに失敗しました（MicrophoneTranscriber が未定義）"); return;
+  }
+
+  // システム音声の場合は先にストリームを取得
+  let externalStream = null;
+  if (audioSource === "system") {
+    try {
+      externalStream = await _getAudioStream();
+    } catch(e) {
+      showError(e.message); return;
+    }
+    _moonshineSystemStream = externalStream;
+  }
+  hideError();
+
+  isRecording = true;
+  startTime   = Date.now();
+  _sessionId  = crypto.randomUUID();
+  timerInterval = setInterval(updateTimer, 1000);
+  document.getElementById("btnRec").style.display  = "none";
+  document.getElementById("btnStop").style.display = "";
+  document.getElementById("recInd").classList.add("active");
+  document.getElementById("timer").classList.add("active");
+
+  _lastSpeechTime = Date.now();
+  clearInterval(_silenceCheckInterval);
+  _silenceCheckInterval = setInterval(() => {
+    if (isRecording && _lastSpeechTime && Date.now() - _lastSpeechTime > SILENCE_TIMEOUT_MS) {
+      showError("3分間無音のため録音を自動停止しました");
+      stopRecording();
+    }
+  }, 15000);
+
+  const modelId = localStorage.getItem("sb_moonshine_model") || "model/tiny";
+  const callbacks = {
+    onTranscriptionCommitted(text) {
+      if (!text || !text.trim()) return;
+      _lastSpeechTime = Date.now();
+      const t = text.trim();
+      transcript  += (transcript  ? "\n" : "") + "[Moonshine] " + t;
+      pendingText += (pendingText ? " "  : "") + t;
+      charsSinceAnalysis += t.length;
+      document.getElementById("btnAnalyze").disabled = false;
+      updateTranscript();
+      if (autoAnalyzeEnabled && charsSinceAnalysis >= THRESHOLD && !isAnalyzing) analyzeNow();
+    },
+    onTranscriptionUpdated(text) {
+      if (text) {
+        _liveText = text; _activeKP = matchKP(text); updateNowBar();
+        _lastSpeechTime = Date.now();
+      }
+    }
+  };
+  try {
+    _moonshineTranscriber = new _MoonshineSDK.MicrophoneTranscriber(modelId, callbacks);
+    if (externalStream) {
+      // システム音声: start() でモデルロード＋文字起こしループ開始、その後 attachStream() でストリームを差し替え
+      await _moonshineTranscriber.start();
+      _moonshineTranscriber.attachStream(externalStream);
+      externalStream.getAudioTracks()[0].onended = () => {
+        if (isRecording) { showError("画面共有が停止されたため録音を終了しました"); stopRecording(); }
+      };
+      showError("🌙 Moonshine システム音声文字起こし中（" + modelId + "）");
+    } else {
+      await _moonshineTranscriber.start();
+      showError("🌙 Moonshine 文字起こし中（" + modelId + "）");
+    }
+  } catch(e) {
+    showError("Moonshine 起動エラー: " + e.message);
+    isRecording = false;
+    clearInterval(timerInterval); clearInterval(_silenceCheckInterval);
+    document.getElementById("btnRec").style.display  = "";
+    document.getElementById("btnStop").style.display = "none";
+    document.getElementById("recInd").classList.remove("active");
+    document.getElementById("timer").classList.remove("active");
+  }
+}
+
+// ============================================================
+// Server badge
+// ============================================================
+function updateServerBadge() {
+  const badge = document.getElementById("serverBadge");
+  const ctrl  = new AbortController();
+  const t     = setTimeout(() => ctrl.abort(), 3000);
+  fetch("/api/info", { signal: ctrl.signal })
+    .then(r => { if (!r.ok) throw new Error(r.status); return r.json(); })
+    .then(info => {
+      clearTimeout(t);
+      const isGpu  = info.device === "cuda";
+      const gpuShort = (info.gpu_name || "").replace("NVIDIA GeForce ","").replace("Apple ","") || info.device;
+      const upd    = info.updated_at ? ` · ${info.updated_at}` : "";
+      badge.textContent = isGpu
+        ? `GPU ${info.whisper_model} (${gpuShort})${upd}`
+        : `CPU ${info.whisper_model}${upd}`;
+      badge.className = "server-badge " + (isGpu ? "gpu" : "online");
+    })
+    .catch(() => {
+      clearTimeout(t);
+      badge.textContent = "未接続";
+      badge.className   = "server-badge offline";
+    });
+}
+updateServerBadge();
+setInterval(updateServerBadge, 30000);
+
+// ============================================================
+// Speaker normalization
+// ============================================================
+const speakerMap = {};
+const SP_LABELS  = ["話者A","話者B","話者C","話者D","話者E","話者F"];
+const SP_CLASSES = ["sp-a","sp-b","sp-c","sp-d","sp-e","sp-u"];
 function normalizeSpeaker(raw) {
   if (!speakerMap[raw]) {
     const idx = Object.keys(speakerMap).length;
-    speakerMap[raw] = {
-      label: SPEAKER_LABELS[idx]  || `話者${idx+1}`,
-      cls:   SPEAKER_CLASSES[idx] || "speaker-unknown"
-    };
+    speakerMap[raw] = { label: SP_LABELS[idx] || `話者${idx+1}`, cls: SP_CLASSES[idx] || "sp-u" };
   }
   return speakerMap[raw];
 }
 
-// Claude 分析プロンプト
+// ============================================================
+// Claude 分析プロンプト（Sliding Window + sections by agenda phase）
+// ============================================================
 const SYSTEM_PROMPT = `あなたは会議・講義のリアルタイム分析アシスタントです。
-与えられた文字起こしテキストから以下を抽出してJSON形式で返してください。
+【前回の分析結果JSON】と【新しい発言】を受け取り、更新後のJSONを返してください。
 
+出力形式：
 {
-  "current_topic": "現在の議題・テーマ（1行）",
-  "key_points": ["論点1", "論点2"],
-  "decisions": ["決定事項1"],
-  "action_items": ["アクションアイテム1"],
-  "summary": "直近の内容の要約（2-3文）"
+  "current_topic": "現在の議題（1行）",
+  "meeting_goal": "この会議で最終的に達成しようとしていることの推測（1-2文。例：「ベンダー3社の中から1社を最終選定する」「プロジェクト開始に向けて役割と締め切りを確定する」）",
+  "pending_decisions": [
+    "この会議でまだ決まっていないが、決める必要がありそうなこと（先読み・最大4件。例：「最終ベンダーの選定」「予算上限の承認」「担当者のアサイン」）"
+  ],
+  "sections": [
+    {
+      "title": "セクション名（会議の進行フェーズ。例：自己紹介・プロジェクト概要・予算議論・次回予定など）",
+      "items": [
+        {
+          "text": "論点テキスト（後のチャプターでより適切な表現が得られた場合は更新してよい）",
+          "status": "💡|❓|✅|⚠️",
+          "evidence": "この論点が出た背景・経緯（誰がどんな発言をしたか具体的に1〜2文で）",
+          "refs": [
+            {"section": "他のセクション名", "note": "そのセクションで出た関連する補足・言及（1文）"}
+          ]
+        }
+      ]
+    }
+  ],
+  "decisions": [
+    {
+      "content": "決定事項テキスト",
+      "confidence": "high|medium|low",
+      "evidence": "この決定に至った議論の流れ（誰がどんな根拠・理由を示したか1〜2文で）"
+    }
+  ],
+  "action_items": ["誰が何をいつまでに"],
+  "open_issues": ["未解決・保留になった論点（最大5個）"],
+  "summary": "会議全体の流れの要約（3-4文）。summary_refsに含めた横断テーマは要約内で言及せず、簡潔にまとめる",
+  "summary_refs": [
+    {
+      "label": "横断テーマ名（例：コスト削減・ベンダー選定・スケジュール調整）",
+      "chapters": [
+        {
+          "section": "セクション名（sectionsのtitleと完全一致させること）",
+          "texts": ["関連する論点テキスト（sectionsのitems.textと完全一致させること）"]
+        }
+      ]
+    }
+  ]
 }
 
-ルール:
-- JSONのみ返す。説明文やバッククォートは不要
+ステータスの定義：
+- 💡 = 新しい提案・アイデア
+- ❓ = 未解決の質問・要確認事項
+- ✅ = 合意済み・解決済みの論点
+- ⚠️ = 懸念・リスク・注意点
+
+confidenceの定義：
+- high   = 「〜でいきましょう」「〜に決まりました」など明確な合意
+- medium = 概ね合意だが正式確認待ち
+- low    = 「前向きに検討」「持ち帰ります」など曖昧・仮決定
+
+evidenceの書き方：
+- 発言者が特定できる場合は「〇〇氏が〜と指摘」「参加者から〜との懸念が出た」など主語を明示
+- 発言の要点・根拠を具体的に含める（「コスト削減効果として30%を提示」など）
+- 話者不明の場合は発言内容の要点のみ記載
+- 1〜2文、50文字以内が望ましい
+
+meeting_goalのルール：
+- 発言の内容・議題・参加者の関係性から会議の最終目的を推測する
+- 推測が間違っていても構わない。ただし「〜する会議」と具体的に書く
+- 分析が進むにつれて精度を上げる
+
+pending_decisionsのルール：
+- 会議の目的と現在の議論から「まだ決まっていないが決めないといけないこと」を先読みする
+- すでに決まったことはdecisionsに入れ、pending_decisionsには入れない
+- 「〜の選定」「〜の確認」「〜のアサイン」など動詞で終わる形で書く
+- 最大4件
+
+sectionsのルール：
+- 会議の進行フェーズごとにsectionを区切る（自己紹介・議題1・休憩後の議論など）
+- 同じフェーズの発言は同じsectionのitemsに追加する
+- 前回のJSONに同名または同フェーズのsectionがある場合はそのsectionを更新・継続する
+- sectionsは最大5セクション、各sectionのitemsは最大4件
+
+item.refsのルール：
+- 新しい発言が既存の論点（別セクション含む）に関連する補足・文脈を提供する場合は、そのitemsのrefsに追加する
+- refs は optional。関連情報がない場合は省略または空配列
+- 前回のJSONのrefs内容は原則引き継いで追記する（上書きしない）
+- refsが追加されて論点の意味がより正確に表現できる場合は text を改善してよい
+- refs は最大3件。各refのsectionはsectionsのtitleと一致している必要はなく、話題のタグとして自由に記述
+
+summary_refsのルール：
+- 複数のsectionにまたがって繰り返し登場するテーマ・トピックを特定する
+- 単一のsectionにしか登場しないテーマはsummary_refsに含めない（2チャプター以上が必須）
+- chapters[].sectionはsectionsのtitleと完全一致させること
+- chapters[].textsはsectionsのitems.textと完全一致させること（要約・言い換え不可）
+- 最大3件。テーマが少ない場合は空配列でよい
+- summaryテキストはsummary_refsに委ねた横断テーマを繰り返さず、全体の流れに集中する
+
+ルール：
+- JSONのみ返す（説明文・バッククォート不要）
 - 日本語で回答
-- key_pointsは重要な論点のみ（最大5個）
-- decisionsは明確に決定された事項のみ
-- action_itemsは「誰が何をいつまでに」が明確なもののみ
-- 情報が不足している場合は空配列
-- current_topicが不明なら「（分析中）」`;
+- フィラー（「えー」「あの」「なるほど」「そうですね」）は除去して要約
+- 主語が省略された発言は文脈から補完
+- open_issuesは明示的に保留・先送りされた論点のみ
+- 前回のJSONが空の場合は全体を新規分析`;
 
 // ============================================================
 // 設定
 // ============================================================
 function openSettings() {
-  document.getElementById("apiKeyInput").value        = localStorage.getItem("sb_api_key") || "";
-  document.getElementById("hfTokenInput").value       = localStorage.getItem("sb_hf_token") || "";
-  document.getElementById("diarizeModelInput").value  = localStorage.getItem("sb_diarize_model") || "";
-  document.getElementById("thresholdInput").value     = THRESHOLD;
-  document.getElementById("chunkSecondsInput").value  = CHUNK_SECONDS;
+  document.getElementById("hfTokenInput").value      = localStorage.getItem("sb_hf_token")      || "";
+  document.getElementById("diarizeModelInput").value = localStorage.getItem("sb_diarize_model") || "pyannote/speaker-diarization-3.1";
+  const diarizeOn = localStorage.getItem("sb_diarize_enabled") !== "0";
+  document.getElementById("diarizeToggle").checked = diarizeOn;
+  document.getElementById("diarizeToggleLabel").textContent = diarizeOn ? "オン" : "オフ";
+  document.getElementById("autoAnalyzeToggle").checked = autoAnalyzeEnabled;
+  document.getElementById("autoAnalyzeLabel").textContent = autoAnalyzeEnabled ? "オン" : "オフ";
+  document.getElementById("thresholdInput").value    = THRESHOLD;
+  document.getElementById("chunkSecondsInput").value = CHUNK_SECONDS;
+  document.getElementById("vocabInput").value        = localStorage.getItem("sb_vocab") || "";
+  document.getElementById("engineSelect").value      = localStorage.getItem("sb_engine") || "whisperx";
+  document.getElementById("moonshineModelInput").value = localStorage.getItem("sb_moonshine_model") || "model/tiny";
+  // Moonshineブラウザモデル行の表示/非表示
+  const eng = document.getElementById("engineSelect");
+  document.getElementById("moonshineModelField").style.display = eng.value === "moonshine" ? "" : "none";
+  eng.onchange = () => {
+    document.getElementById("moonshineModelField").style.display = eng.value === "moonshine" ? "" : "none";
+  };
+  // Azure OpenAI 設定
+  document.getElementById("azureEndpointInput").value   = localStorage.getItem("sb_azure_endpoint")   || "";
+  document.getElementById("azureDeploymentInput").value = localStorage.getItem("sb_azure_deployment")  || "";
+  document.getElementById("azureApiKeyInput").value     = localStorage.getItem("sb_azure_api_key")     || "";
+  document.getElementById("azureApiVersionInput").value = localStorage.getItem("sb_azure_api_version") || "";
   updateKeyStatus();
   document.getElementById("settingsModal").classList.add("open");
 }
 function closeSettings() { document.getElementById("settingsModal").classList.remove("open"); }
 function saveSettings() {
-  const key   = document.getElementById("apiKeyInput").value.trim();
   const hft   = document.getElementById("hfTokenInput").value.trim();
   const model = document.getElementById("diarizeModelInput").value.trim();
   const thr   = Math.max(50,  Math.min(2000, parseInt(document.getElementById("thresholdInput").value)    || 200));
-  const chnk  = Math.max(5,   Math.min(60,   parseInt(document.getElementById("chunkSecondsInput").value) || 15));
-  if (key)   localStorage.setItem("sb_api_key",       key);   else localStorage.removeItem("sb_api_key");
-  if (hft)   localStorage.setItem("sb_hf_token",      hft);   else localStorage.removeItem("sb_hf_token");
-  if (model) localStorage.setItem("sb_diarize_model", model); else localStorage.removeItem("sb_diarize_model");
-  localStorage.setItem("sb_threshold",      thr);
-  localStorage.setItem("sb_chunk_seconds",  chnk);
+  const chnk  = Math.max(5,   Math.min(120,  parseInt(document.getElementById("chunkSecondsInput").value) || 30));
+  if (hft) localStorage.setItem("sb_hf_token", hft); else localStorage.removeItem("sb_hf_token");
+  localStorage.setItem("sb_diarize_model",   model || "pyannote/speaker-diarization-3.1");
+  localStorage.setItem("sb_diarize_enabled", document.getElementById("diarizeToggle").checked ? "1" : "0");
+  autoAnalyzeEnabled = document.getElementById("autoAnalyzeToggle").checked;
+  localStorage.setItem("sb_auto_analyze",    autoAnalyzeEnabled ? "1" : "0");
+  localStorage.setItem("sb_threshold",       thr);
+  localStorage.setItem("sb_chunk_seconds",   chnk);
+  const vocab = document.getElementById("vocabInput").value.trim();
+  if (vocab) localStorage.setItem("sb_vocab", vocab); else localStorage.removeItem("sb_vocab");
+  transcribeEngine = document.getElementById("engineSelect").value;
+  localStorage.setItem("sb_engine", transcribeEngine);
+  const mModel = document.getElementById("moonshineModelInput").value;
+  localStorage.setItem("sb_moonshine_model", mModel);
+  // Azure OpenAI 保存
+  const azEp  = document.getElementById("azureEndpointInput").value.trim();
+  const azDep = document.getElementById("azureDeploymentInput").value.trim();
+  const azKey = document.getElementById("azureApiKeyInput").value.trim();
+  const azVer = document.getElementById("azureApiVersionInput").value.trim();
+  if (azEp)  localStorage.setItem("sb_azure_endpoint",    azEp);  else localStorage.removeItem("sb_azure_endpoint");
+  if (azDep) localStorage.setItem("sb_azure_deployment",  azDep); else localStorage.removeItem("sb_azure_deployment");
+  if (azKey) localStorage.setItem("sb_azure_api_key",     azKey); else localStorage.removeItem("sb_azure_api_key");
+  if (azVer) localStorage.setItem("sb_azure_api_version", azVer); else localStorage.removeItem("sb_azure_api_version");
+  updateEngineBadge();
   THRESHOLD     = thr;
   CHUNK_SECONDS = chnk;
-  document.getElementById("thresholdLabel").textContent = thr;
   closeSettings(); hideError();
 }
+document.getElementById("diarizeToggle").addEventListener("change", function() {
+  document.getElementById("diarizeToggleLabel").textContent = this.checked ? "オン" : "オフ";
+});
+document.getElementById("autoAnalyzeToggle").addEventListener("change", function() {
+  document.getElementById("autoAnalyzeLabel").textContent = this.checked ? "オン" : "オフ";
+});
 function updateKeyStatus() {
   const el  = document.getElementById("keyStatus");
   const hel = document.getElementById("hfStatus");
-  if (localStorage.getItem("sb_api_key")) {
-    el.className="key-status key-ok"; el.textContent="✅ APIキー設定済み";
-  } else {
-    el.className="key-status key-missing"; el.textContent="⚠ APIキー未設定（分析機能に必要）";
-  }
-  if (localStorage.getItem("sb_hf_token")) {
-    hel.className="key-status key-ok"; hel.textContent="✅ HFトークン設定済み（話者分離が有効）";
-  } else {
-    hel.className="key-status key-missing"; hel.textContent="⚠ 未設定（文字起こしのみ・話者分離なし）";
-  }
+  const azOk = !!(localStorage.getItem("sb_azure_api_key") &&
+                  localStorage.getItem("sb_azure_endpoint") &&
+                  localStorage.getItem("sb_azure_deployment"));
+  el.className  = "key-status " + (azOk ? "key-ok" : "key-missing");
+  el.textContent = azOk ? "✅ Azure OpenAI 設定済み" : "⚠ 未設定（エンドポイント・デプロイ名・APIキーが必要）";
+  hel.className  = "key-status " + (localStorage.getItem("sb_hf_token") ? "key-ok" : "key-missing");
+  hel.textContent = localStorage.getItem("sb_hf_token") ? "✅ HFトークン設定済み" : "⚠ 未設定（話者分離なし）";
 }
 
 // ============================================================
-// UI ヘルパー
+// UI helpers
 // ============================================================
-const esc = s => s.replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;");
+const esc = s => String(s).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;");
 function showError(m) { document.getElementById("errorText").textContent=m; document.getElementById("errorBar").style.display="flex"; }
 function hideError()  { document.getElementById("errorBar").style.display="none"; }
-
-function setStatus(s) {
-  const b = document.getElementById("statusBadge");
-  if      (s==="rec")          { b.className="status-badge status-rec";          b.innerHTML='<span class="pulse-dot"></span> REC'; }
-  else if (s==="transcribing") { b.className="status-badge status-transcribing"; b.textContent="⟳ 文字起こし中"; }
-  else if (s==="analyzing")    { b.className="status-badge status-analyzing";    b.textContent="⚡ 分析中"; }
-  else                          { b.className="status-badge status-idle";         b.textContent="⏸ 停止中"; }
-}
 
 function updateTimer() {
   if (!startTime) return;
   const e = Math.floor((Date.now()-startTime)/1000);
-  document.getElementById("timer").textContent =
-    String(Math.floor(e/60)).padStart(2,"0")+":"+String(e%60).padStart(2,"0");
+  _lastRecTime = String(Math.floor(e/60)).padStart(2,"0")+":"+String(e%60).padStart(2,"0");
+  const el = document.getElementById("timer");
+  el.textContent = _lastRecTime;
+  el.className = isRecording ? "timer active" : "timer";
 }
 
-// 文字起こし表示（話者セグメントがあればカラーラベル付き、なければ rawテキスト）
+// アイテムの初出時刻記録（string or {text,status} 両対応）
+function _itemText(item) { return typeof item === "object" ? (item.text || "") : (item || ""); }
+function _stampItem(item) {
+  const key = _itemText(item).trim().slice(0, 60);
+  if (key && !_itemTimestamps[key]) _itemTimestamps[key] = _lastRecTime;
+  return _itemTimestamps[key] || "";
+}
+function _getStamp(item) {
+  return _itemTimestamps[_itemText(item).trim().slice(0, 60)] || "";
+}
+function _timeToSec(t) {
+  const [m, s] = (t || "00:00").split(":").map(Number);
+  return (m||0)*60 + (s||0);
+}
+function timeChip(t) {
+  if (!t) return "";
+  const age = _timeToSec(_lastRecTime) - _timeToSec(t);
+  const cls = age < 120 ? "t-fresh" : age < 300 ? "t-recent" : "t-old";
+  return `<span class="item-time ${cls}">${t}</span>`;
+}
+
+// ============================================================
+// バイグラム類似度（日本語リアルタイムトピックマッチ）
+// ============================================================
+function jpBigram(s) {
+  const set = new Set();
+  for (let i = 0; i < s.length - 1; i++) set.add(s.slice(i, i+2));
+  return set;
+}
+function bigramSim(a, b) {
+  const ga = jpBigram(a), gb = jpBigram(b);
+  let overlap = 0;
+  ga.forEach(g => { if (gb.has(g)) overlap++; });
+  return overlap / Math.max(ga.size, 1);
+}
+// sections 内の全 items をフラット配列で返すヘルパー
+function _flatItems() {
+  return (merged.sections||[]).flatMap(s => s.items||[]);
+}
+
+function matchKP(text) {
+  const flat = _flatItems();
+  if (!flat.length || !text || text.length < 4) return -1;
+  let best = -1, bestScore = 0.08;
+  flat.forEach((p, i) => {
+    const kpText = _itemText(p);
+    if (!kpText) return;
+    // evidenceを除外してバイグラム計算（evidence混入による誤マッチを防ぐ）
+    let score = bigramSim(text, kpText);
+    // 3文字以上の直接部分文字列マッチでボーナス（形態素的マッチ）
+    for (let j = 0; j < kpText.length - 2; j++) {
+      if (text.includes(kpText.slice(j, j + 3))) { score += 0.12; break; }
+    }
+    if (score > bestScore) { bestScore = score; best = i; }
+  });
+  return best;
+}
+
+// ============================================================
+// Web Speech API（並走・リアルタイムインタリム）
+// ============================================================
+function _wsrRestart() {
+  if (!isRecording || !_wsrSupported) return;
+  const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
+  if (!SR) return;
+  const r = new SR();
+  r.lang = "ja-JP";
+  r.continuous = true;
+  r.interimResults = true;
+  r.maxAlternatives = 1;
+  r.onresult = (event) => {
+    let text = "";
+    for (let i = event.resultIndex; i < event.results.length; i++) {
+      text += event.results[i][0].transcript;
+    }
+    if (text) { _liveText = text; _activeKP = matchKP(text); updateNowBar(); _lastSpeechTime = Date.now(); }
+  };
+  r.onerror = (e) => {
+    if (e.error === "not-allowed") _wsrSupported = false;
+  };
+  r.onend = _wsrRestart;   // 終わったら常に新インスタンスで再起動
+  _wsr = r;
+  try { _wsr.start(); } catch(e) {}
+}
+
+function initWSR() {
+  const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
+  if (!SR) { _wsrSupported = false; return; }
+  _wsrSupported = true;
+  _wsrRestart();
+}
+
+// ============================================================
+// nowBar 更新
+// ============================================================
+function updateNowBar() {
+  const bar = document.getElementById("nowBar");
+  if (!isRecording || (!_liveText && !_lastSpeaker)) { bar.style.display = "none"; return; }
+  bar.style.display = "flex";
+
+  document.getElementById("nowSpeaker").textContent = "🎙 " + (_lastSpeaker || "話している…");
+
+  const liveEl = document.getElementById("nowLiveText");
+  if (_liveText) {
+    liveEl.textContent = "「" + _liveText + "」";
+    liveEl.style.display = "";
+  } else {
+    liveEl.style.display = "none";
+  }
+
+  const kpWrap = document.getElementById("nowKPWrap");
+  const flat = _flatItems();
+  if (_activeKP >= 0 && flat[_activeKP]) {
+    const kp = flat[_activeKP];
+    const st = typeof kp === "object" ? (kp.status||"💡") : "💡";
+    document.getElementById("nowKP").textContent = st + " " + _itemText(kp);
+    kpWrap.style.display = "";
+  } else {
+    kpWrap.style.display = "none";
+  }
+
+  // 論点ハイライト更新（data-flat-idx 属性でフラットインデックスを管理）
+  document.querySelectorAll("#keyPoints [data-flat-idx]").forEach(el => {
+    el.classList.toggle("kp-active", parseInt(el.dataset.flatIdx) === _activeKP);
+  });
+}
+
+// ============================================================
+// Transcript (collapsible panel)
+// ============================================================
+function toggleTranscript() {
+  const panel = document.getElementById("transcriptPanel");
+  const btn   = document.getElementById("btnTranscript");
+  panel.classList.toggle("open");
+  btn.classList.toggle("on");
+}
+
 function updateTranscript() {
-  const el   = document.getElementById("transcriptContent");
-  const body = document.getElementById("transcriptBody");
-
+  const el = document.getElementById("transcriptContent");
   if (!transcript && !isTranscribing) return;
-
   let h = "";
   if (merged.speaker_segments.length > 0) {
-    // 話者ラベル付き表示
     h = merged.speaker_segments.map(seg => {
       const sp = normalizeSpeaker(seg.speaker);
-      return `<div class="speaker-segment ${sp.cls}">
-        <span class="speaker-label">${esc(sp.label)}</span>
-        <span class="speaker-text">${esc(seg.text)}</span>
-      </div>`;
+      return `<div class="speaker-seg ${sp.cls}"><span class="sp-label">${esc(sp.label)}</span><span class="sp-text">${esc(seg.text)}</span></div>`;
     }).join("");
-    // 分析済み以降の pending テキストを薄く表示
     if (pendingText.trim()) {
-      h += `<div class="transcript-pending-block">
-        <div class="transcript-pending-label">未分析の新しい発言</div>
-        <div class="transcript-pending-text">${esc(pendingText.trim())}</div>
-      </div>`;
+      h += `<div class="tr-pending"><div class="tr-pending-label">未分析の新しい発言</div><div class="tr-pending-text">${esc(pendingText.trim())}</div></div>`;
     }
   } else if (transcript) {
-    // 話者分離なし: raw テキスト表示
     h = transcript.split("\n").filter(Boolean)
-      .map(l=>`<div class="transcript-line">${esc(l)}</div>`).join("");
+      .map(l=>`<div class="tr-line">${esc(l)}</div>`).join("");
   }
-
-  // 文字起こし処理中インジケータ
   if (isTranscribing) {
-    h += `<div class="processing-indicator"><span class="spin">⟳</span> WhisperXで文字起こし中...</div>`;
+    const _eng = localStorage.getItem("sb_engine") || "whisperx";
+    const _engLabel = _eng === "moonshine-ja" ? "Moonshine JA" : "WhisperX";
+    h += `<div class="tr-processing"><span class="spin">⟳</span> ${_engLabel}で文字起こし中...</div>`;
   }
-
   el.innerHTML = h;
-  el.className = "";
-  document.getElementById("charCount").textContent = transcript.length + "文字";
-  body.scrollTop = body.scrollHeight;
+  const panel = document.getElementById("transcriptPanel");
+  panel.scrollTop = panel.scrollHeight;
 }
 
-// チャンク進行バー（時間ベース）
+// ============================================================
+// Chunk progress
+// ============================================================
 function startChunkProgress() {
+  clearInterval(chunkProgressInterval);  // 既存インターバルをクリア（二重登録防止）
   chunkStartTime = Date.now();
   document.getElementById("progressWrap").style.display = "block";
   chunkProgressInterval = setInterval(() => {
-    const elapsed = (Date.now() - chunkStartTime) / 1000;
-    const pct = Math.min(100, (elapsed / CHUNK_SECONDS) * 100);
-    const remain = Math.max(0, CHUNK_SECONDS - Math.floor(elapsed));
-    document.getElementById("progressFill").style.width = pct + "%";
+    const elapsed = (Date.now()-chunkStartTime)/1000;
+    const pct     = Math.min(100, (elapsed/CHUNK_SECONDS)*100);
+    const remain  = Math.max(0, CHUNK_SECONDS-Math.floor(elapsed));
+    document.getElementById("progressFill").style.width = pct+"%";
     document.getElementById("progressLabel").textContent = `次の文字起こしまで ${remain}秒`;
   }, 500);
 }
 function stopChunkProgress() {
-  clearInterval(chunkProgressInterval);
-  chunkProgressInterval = null;
+  clearInterval(chunkProgressInterval); chunkProgressInterval = null;
   document.getElementById("progressFill").style.width = "0%";
   document.getElementById("progressLabel").textContent = "文字起こし中...";
 }
 
-function updateAnalysisUI() {
-  document.getElementById("currentTopic").textContent = merged.current_topic || "（分析中）";
-  document.getElementById("summaryText").textContent  = merged.summary       || "分析結果がここに表示されます";
-  document.getElementById("analysisCount").textContent = analysisCount + "回分析";
-  const kp = document.getElementById("keyPoints");
-  if (merged.key_points.length)
-    kp.innerHTML = merged.key_points.map(p=>`<li><span class="point-dot"></span><span>${esc(p)}</span></li>`).join("");
-  const d = document.getElementById("decisions");
-  if (merged.decisions.length)
-    d.innerHTML = merged.decisions.map(x=>`<li>✅ <span>${esc(x)}</span></li>`).join("");
-  const a = document.getElementById("actionItems");
-  if (merged.action_items.length)
-    a.innerHTML = merged.action_items.map(x=>`<li>→ <span>${esc(x)}</span></li>`).join("");
-  const hist = document.getElementById("analysisHistory");
-  if (historyLog.length)
-    hist.innerHTML = [...historyLog].reverse().map(h=>
-      `<div class="history-item"><span class="history-time">${h.ts}</span><div class="history-summary">${esc(h.summary)}</div></div>`
+// ============================================================
+// Skeleton UI
+// ============================================================
+function showSkeleton() {
+  const skLines = n => Array.from({length:n}, (_,i) => {
+    const ws = ["w90","w75","w80","w60","w90","w70"];
+    return `<div class="skel-wrap"><div class="skel ${ws[i%ws.length]}"></div></div>`;
+  }).join("");
+  document.getElementById("keyPoints").innerHTML   = skLines(4);
+  document.getElementById("decisions").innerHTML   = skLines(2);
+  document.getElementById("actionItems").innerHTML = skLines(2);
+}
+function hideSkeleton() { /* updateAnalysisUI() がそのまま上書きするので不要 */ }
+
+// ============================================================
+// Analysis UI update
+// ============================================================
+function updateAnalysisUI(prevMerged) {
+  const prev = prevMerged || { sections:[], decisions:[], action_items:[], open_issues:[] };
+
+  // 前回のテキストセット（新規判定用）
+  const prevKP = new Set((prev.sections||[]).flatMap(s => s.items||[]).map(_itemText));
+  const prevD  = new Set((prev.decisions||[]).map(d=>typeof d==="object"?d.content:d));
+  const prevA  = new Set(prev.action_items||[]);
+  const prevOI = new Set(prev.open_issues||[]);
+
+  // 議題
+  const topicEl = document.getElementById("currentTopic");
+  if (merged.current_topic) {
+    const old = topicEl.textContent;
+    topicEl.textContent = merged.current_topic;
+    topicEl.className = "topic-text";
+    if (old !== merged.current_topic && old) {
+      const block = document.getElementById("topicBlock");
+      block.classList.remove("topic-flash");
+      void block.offsetWidth;
+      block.classList.add("topic-flash");
+    }
+  }
+
+  // 会議の狙い（推測）
+  const goalBlock = document.getElementById("goalBlock");
+  const goalEl    = document.getElementById("meetingGoal");
+  if (merged.meeting_goal) {
+    goalEl.textContent      = merged.meeting_goal;
+    goalBlock.style.display = "";
+  } else {
+    goalBlock.style.display = "none";
+  }
+
+  // 要約
+  const sumEl = document.getElementById("summaryText");
+  sumEl.textContent = merged.summary || "（分析後に表示）";
+  sumEl.className = merged.summary ? "summary-text" : "summary-text empty-state";
+
+  // 横断議録（summary_refs）
+  const srEl = document.getElementById("summaryRefs");
+  if (merged.summary_refs && merged.summary_refs.length) {
+    srEl.innerHTML = merged.summary_refs.map(ref => {
+      const chapCount = (ref.chapters||[]).filter(ch => (ch.texts||[]).length > 0).length;
+      const chaptersHtml = (ref.chapters||[]).map(ch => {
+        // sectionsから対応するsectionを検索してitem情報（status/evidence）を補完
+        const sec = (merged.sections||[]).find(s => s.title === ch.section);
+        const rowsHtml = (ch.texts||[]).map(t => {
+          const item = sec ? (sec.items||[]).find(p => _itemText(p) === t) : null;
+          const status   = item ? (item.status||"💡") : "📎";
+          const evidence = item ? (item.evidence||"") : "";
+          return `<li class="ref-chapter-row">
+            <span class="si">${status}</span>
+            <div class="ref-row-text">${esc(t)}${evidence ? `<div class="ref-row-ev">${esc(evidence)}</div>` : ""}</div>
+          </li>`;
+        }).join("");
+        return `<div class="ref-chapter">
+          <div class="ref-chapter-title">${esc(ch.section||"")}</div>
+          <ul class="ref-chapter-items">${rowsHtml}</ul>
+        </div>`;
+      }).join("");
+      return `<div class="sumref-item" onclick="this.classList.toggle('open')">
+        <div class="sumref-header">
+          <span class="sumref-icon">📎</span>
+          <span class="sumref-label">${esc(ref.label||"")}</span>
+          <span class="sumref-count">${chapCount}チャプター</span>
+          <span class="sumref-toggle">▼</span>
+        </div>
+        <div class="sumref-body">
+          <div class="sumref-chapters">${chaptersHtml}</div>
+        </div>
+      </div>`;
+    }).join("");
+  } else {
+    srEl.innerHTML = "";
+  }
+
+  // 分析回数
+  document.getElementById("analysisCount").textContent = `（${analysisCount}回）`;
+
+  // ステータスカウンター（全セクションのitemsを横断集計）
+  const cnts = {"💡":0,"❓":0,"✅":0,"⚠️":0};
+  _flatItems().forEach(p => {
+    const s = typeof p === "object" ? (p.status||"💡") : "💡";
+    if (cnts[s]!==undefined) cnts[s]++;
+  });
+  document.getElementById("cntIdea").textContent = cnts["💡"];
+  document.getElementById("cntQ").textContent    = cnts["❓"];
+  document.getElementById("cntOk").textContent   = cnts["✅"];
+  document.getElementById("cntWarn").textContent = cnts["⚠️"];
+
+  // モバイルバー更新
+  document.getElementById("mobTopic").textContent  = merged.current_topic || "録音を開始してください";
+  document.getElementById("mobCounts").textContent = `💡${cnts["💡"]} ❓${cnts["❓"]} ✅${cnts["✅"]} ⚠️${cnts["⚠️"]}`;
+
+  // 論点（セクション別グループ + フラットインデックスでハイライト管理）
+  const kpEl = document.getElementById("keyPoints");
+  const sections = merged.sections||[];
+  if (sections.length) {
+    let flatIdx = 0;
+    kpEl.innerHTML = sections.map(sec => {
+      const itemsHtml = (sec.items||[]).map(p => {
+        const text     = _itemText(p);
+        const status   = typeof p === "object" ? (p.status||"💡") : "💡";
+        const evidence = typeof p === "object" ? (p.evidence||"") : "";
+        const refs     = typeof p === "object" ? (p.refs||[]) : [];
+        const isNew    = !prevKP.has(text);
+        const at       = _getStamp(p);
+        const hasExp   = evidence.trim() !== "" || refs.length > 0;
+        const refsHtml = refs.length
+          ? `<div class="ref-entries">${refs.map(r => {
+              const rat = _getStamp(r.note||"");
+              return `<div class="ref-entry"><span class="ref-entry-sec">${esc(r.section||"")}</span><span class="ref-entry-note">${esc(r.note||"")}</span>${timeChip(rat)}</div>`;
+            }).join("")}</div>`
+          : "";
+        const expBody  = hasExp
+          ? `<div class="exp-body"><div class="exp-evidence">${at?`<div class="exp-when">🕐 ${at} 頃の発言</div>`:""}${evidence?esc(evidence):""}${refsHtml}</div></div>`
+          : "";
+        const fi = flatIdx++;
+        return `<li class="exp-item${isNew?" item-new":""}" data-flat-idx="${fi}" ${hasExp?'onclick="this.classList.toggle(\'open\')"':""}>
+          <div class="exp-header"><span class="si">${status}</span><span class="pt">${esc(text)}</span>${timeChip(at)}${hasExp?'<span class="exp-toggle">▼</span>':""}</div>
+          ${expBody}
+        </li>`;
+      }).join("");
+      return `<li class="section-group">
+        <div class="section-header">${esc(sec.title||"")}</div>
+        <ul class="section-items">${itemsHtml}</ul>
+      </li>`;
+    }).join("");
+  } else {
+    kpEl.innerHTML = '<li class="empty-state">（論点が検出されると表示）</li>';
+  }
+
+  // 決定事項 (expandable evidence)
+  const dEl = document.getElementById("decisions");
+  const confMap = { high:["✅ 確定","conf-h"], medium:["🔄 暫定","conf-m"], low:["💭 要検討","conf-l"] };
+  if (merged.decisions.length) {
+    dEl.innerHTML = merged.decisions.map(x => {
+      const content  = typeof x === "object" ? (x.content||"") : x;
+      const conf     = (typeof x === "object" && x.confidence) ? x.confidence : "medium";
+      const evidence = typeof x === "object" ? (x.evidence||"") : "";
+      const [label, cls] = confMap[conf] || confMap.medium;
+      const isNew  = !prevD.has(content);
+      const at     = _getStamp(content);
+      const hasExp = evidence.trim() !== "";
+      const expBody = hasExp
+        ? `<div class="exp-body"><div class="exp-evidence">${at?`<div class="exp-when">🕐 ${at} 頃の発言</div>`:""}${esc(evidence)}</div></div>`
+        : "";
+      return `<div class="decision-card exp-item${isNew?" item-new":""}" ${hasExp?'onclick="this.classList.toggle(\'open\')"':""}>
+        <div class="exp-header"><span class="conf-badge ${cls}">${label}</span><span class="d-text">${esc(content)}</span>${timeChip(at)}${hasExp?'<span class="exp-toggle">▼</span>':""}</div>
+        ${expBody}
+      </div>`;
+    }).join("");
+  } else {
+    dEl.innerHTML = '<div class="empty-state">（決定事項が検出されると表示）</div>';
+  }
+
+  // やること
+  const aEl = document.getElementById("actionItems");
+  if (merged.action_items.length) {
+    aEl.innerHTML = merged.action_items.map(x => {
+      const isNew = !prevA.has(x);
+      const at    = _getStamp(x);
+      return `<div class="action-item${isNew?" item-new":""}"><span class="a-arrow">→</span><span style="flex:1">${esc(x)}</span>${timeChip(at)}</div>`;
+    }).join("");
+  } else {
+    aEl.innerHTML = '<div class="empty-state">（タスクが検出されると表示）</div>';
+  }
+
+  // まだ決めていないこと（先回り予測）
+  const pdEl = document.getElementById("pendingDecisions");
+  if (merged.pending_decisions && merged.pending_decisions.length) {
+    pdEl.innerHTML = merged.pending_decisions.map(x => {
+      return `<li class="pending-item"><span class="pending-icon">◇</span><span style="flex:1">${esc(x)}</span></li>`;
+    }).join("");
+  } else {
+    pdEl.innerHTML = '<li class="empty-state">（推測されると表示）</li>';
+  }
+
+  // パーキングロット（open_issues）
+  const oiEl = document.getElementById("openIssues");
+  if (merged.open_issues && merged.open_issues.length) {
+    oiEl.innerHTML = merged.open_issues.map(x => {
+      const isNew = !prevOI.has(x);
+      const at    = _getStamp(x);
+      return `<li class="parking-item${isNew?" item-new":""}"><span style="flex:1">${esc(x)}</span>${timeChip(at)}</li>`;
+    }).join("");
+  } else {
+    oiEl.innerHTML = '<li class="empty-state">（保留事項が検出されると表示）</li>';
+  }
+
+  // 分析履歴
+  const histEl = document.getElementById("analysisHistory");
+  if (historyLog.length) {
+    histEl.innerHTML = [...historyLog].reverse().slice(0,5).map(h=>
+      `<div class="history-item"><span class="history-time">${h.ts}</span><div class="history-sum">${esc(h.summary)}</div></div>`
     ).join("");
+  }
+
+  // 論点リスト再描画後にnowBarハイライトを再適用
+  updateNowBar();
 }
 
 // ============================================================
-// 録音（MediaRecorder）
+// 録音
 // ============================================================
 async function startRecording() {
-  if (!localStorage.getItem("sb_api_key")) {
-    showError("APIキーが未設定です。右上の ⚙ ボタンから設定してください。");
+  transcribeEngine = localStorage.getItem("sb_engine") || "whisperx";
+  if (transcribeEngine === "moonshine") {
+    await _startMoonshineRecording();
+    return;
+  }
+  // 分析に Azure OpenAI 設定が必要（文字起こしエンジン問わず確認）
+  const azureOk = !!(localStorage.getItem("sb_azure_api_key") &&
+                     localStorage.getItem("sb_azure_endpoint") &&
+                     localStorage.getItem("sb_azure_deployment"));
+  if (!azureOk) {
+    showError("Azure OpenAI の設定が未完了です。⚙ からエンドポイント・デプロイ名・APIキーを設定してください。");
     openSettings(); return;
   }
-
   let stream;
   try {
-    stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+    stream = await _getAudioStream();
   } catch(e) {
-    showError("マイクのアクセスに失敗しました: " + e.message); return;
+    showError(e.message); return;
   }
+  const mimeTypes = ["audio/webm;codecs=opus","audio/webm","audio/ogg;codecs=opus","audio/mp4"];
+  currentMimeType = mimeTypes.find(t => MediaRecorder.isTypeSupported(t)) || "";
+  const testRec = new MediaRecorder(stream, currentMimeType ? { mimeType: currentMimeType } : {});
+  currentMimeType = testRec.mimeType;
 
-  // mimeType: Chromeは audio/webm;codecs=opus が標準
-  const mimeType = MediaRecorder.isTypeSupported("audio/webm;codecs=opus")
-    ? "audio/webm;codecs=opus" : "audio/webm";
-  mediaRecorder = new MediaRecorder(stream, { mimeType });
-
-  mediaRecorder.ondataavailable = e => { if (e.data.size > 0) audioChunks.push(e.data); };
-
-  mediaRecorder.start(500);   // 500ms ごとにデータ収集
+  _recStream = stream;
+  _blobQueue = [];
   isRecording = true;
-  startTime = Date.now();
+  startTime   = Date.now();
+  _sessionId  = crypto.randomUUID();
   timerInterval = setInterval(updateTimer, 1000);
 
-  // チャンク送信タイマー
-  chunkTimer = setInterval(sendChunk, CHUNK_SECONDS * 1000);
+  _startVolMeter(stream);
+  _startNextChunk();
   startChunkProgress();
 
-  hideError(); setStatus("rec");
+  hideError();
   document.getElementById("btnRec").style.display  = "none";
   document.getElementById("btnStop").style.display = "";
-  if (!transcript) {
-    document.getElementById("transcriptContent").innerHTML = "";
-    document.getElementById("transcriptContent").className = "";
-  }
+  document.getElementById("recInd").classList.add("active");
+  document.getElementById("timer").classList.add("active");
+
+  // Web Speech API を並走開始（initWSR → _wsrRestart で自動start）
+  initWSR();
+
+  // 無音自動停止タイマー開始
+  _lastSpeechTime = Date.now();
+  clearInterval(_silenceCheckInterval);
+  _silenceCheckInterval = setInterval(() => {
+    if (isRecording && _lastSpeechTime && Date.now() - _lastSpeechTime > SILENCE_TIMEOUT_MS) {
+      showError("3分間無音のため録音を自動停止しました");
+      stopRecording();
+    }
+  }, 15000); // 15秒ごとにチェック
+}
+
+function _startNextChunk() {
+  if (!isRecording || !_recStream) return;
+  _chunkBuf   = [];
+  _curRecorder = new MediaRecorder(_recStream, currentMimeType ? { mimeType: currentMimeType } : {});
+  _curRecorder.ondataavailable = e => { if (e.data.size>0) _chunkBuf.push(e.data); };
+  _curRecorder.onstop = () => {
+    if (_chunkBuf.length>0) _enqueueBlob(new Blob(_chunkBuf, { type: currentMimeType }));
+    if (isRecording) _startNextChunk();
+  };
+  _curRecorder.start();
+  setTimeout(() => {
+    if (_curRecorder && _curRecorder.state==="recording") _curRecorder.stop();
+  }, CHUNK_SECONDS*1000);
+}
+
+function _startVolMeter(stream) {
+  try {
+    _audioCtx = new (window.AudioContext||window.webkitAudioContext)();
+    const src = _audioCtx.createMediaStreamSource(stream);
+    _analyserNode = _audioCtx.createAnalyser();
+    _analyserNode.fftSize = 256;
+    src.connect(_analyserNode);
+    const buf   = new Uint8Array(_analyserNode.frequencyBinCount);
+    const mini  = document.getElementById("volMini");
+    const fillM = document.getElementById("volFillMini");
+    mini.classList.add("active");
+    function tick() {
+      _analyserNode.getByteFrequencyData(buf);
+      const rms = Math.sqrt(buf.reduce((s,v)=>s+v*v,0)/buf.length);
+      const pct = Math.min(100, rms*1.2);
+      fillM.style.width = pct+"%";
+      fillM.style.background = pct<15?"var(--red)":pct<40?"var(--orange)":"var(--green)";
+      _volRafId = requestAnimationFrame(tick);
+    }
+    tick();
+  } catch(e) {}
+}
+function _stopVolMeter() {
+  if (_volRafId) { cancelAnimationFrame(_volRafId); _volRafId = null; }
+  if (_audioCtx) { _audioCtx.close(); _audioCtx = null; }
+  _analyserNode = null;
+  document.getElementById("volMini").classList.remove("active");
+  document.getElementById("volFillMini").style.width = "0%";
 }
 
 function stopRecording() {
   isRecording = false;
-  clearInterval(chunkTimer);
   clearInterval(timerInterval);
+  clearInterval(_silenceCheckInterval); _silenceCheckInterval = null; _lastSpeechTime = null;
   stopChunkProgress();
-
-  if (mediaRecorder && mediaRecorder.state !== "inactive") {
-    mediaRecorder.onstop = () => sendChunk();   // 最後のチャンクを送信
-    mediaRecorder.stop();
-    mediaRecorder.stream.getTracks().forEach(t => t.stop());
+  _stopVolMeter();
+  if (_curRecorder && _curRecorder.state==="recording") {
+    _curRecorder.onstop = () => {
+      if (_chunkBuf.length>0) _enqueueBlob(new Blob(_chunkBuf, { type: currentMimeType }));
+      if (_recStream) { _recStream.getTracks().forEach(t=>t.stop()); _recStream = null; }
+    };
+    _curRecorder.stop();
+  } else {
+    if (_recStream) { _recStream.getTracks().forEach(t=>t.stop()); _recStream = null; }
   }
-  mediaRecorder = null;
-
-  setStatus("idle");
+  _curRecorder = null;
   document.getElementById("btnRec").style.display  = "";
   document.getElementById("btnStop").style.display = "none";
+  document.getElementById("recInd").classList.remove("active");
+  document.getElementById("timer").classList.remove("active");
   document.getElementById("progressWrap").style.display = "none";
+
+  // Web Speech API 停止
+  if (_wsr) { try { _wsr.stop(); } catch(e) {} }
+  // Moonshine 停止
+  if (_moonshineTranscriber) {
+    try { _moonshineTranscriber.stop(); } catch(e) {}
+    _moonshineTranscriber = null;
+  }
+  if (_moonshineSystemStream) {
+    _moonshineSystemStream.getTracks().forEach(t => t.stop());
+    _moonshineSystemStream = null;
+  }
+  _liveText = ""; _lastSpeaker = null; _activeKP = -1;
+  document.getElementById("nowBar").style.display = "none";
+  hideError();
 }
 
 // ============================================================
 // チャンク送信 → WhisperX 文字起こし
 // ============================================================
-async function sendChunk() {
-  if (audioChunks.length === 0) return;
+function _enqueueBlob(blob) {
+  _blobQueue.push(blob);
+  if (!isTranscribing) _processQueue();
+}
 
-  const blob = new Blob(audioChunks, { type: "audio/webm" });
-  audioChunks = [];
-
-  // チャンク進行バーをリセット
+async function _processQueue() {
+  if (isTranscribing || _blobQueue.length===0) return;
+  const blob = _blobQueue.shift();
   stopChunkProgress();
   isTranscribing = true;
-  setStatus("transcribing");
-  updateTranscript();   // "文字起こし中..." インジケータ表示
-
+  updateTranscript();
   try {
-    const hfToken      = localStorage.getItem("sb_hf_token")      || "";
-    const diarizeModel = localStorage.getItem("sb_diarize_model") || "";
-    const resp = await fetch("/api/transcribe", {
-      method: "POST",
-      headers: {
-        "Content-Type":    "audio/webm",
+    const engine    = localStorage.getItem("sb_engine") || "whisperx";
+    const isMoonJA  = engine === "moonshine-ja";
+    const diarizeOn = !isMoonJA && localStorage.getItem("sb_diarize_enabled") !== "0";
+    const hfToken   = diarizeOn ? (localStorage.getItem("sb_hf_token")||"") : "";
+    const dModel    = diarizeOn ? (localStorage.getItem("sb_diarize_model")||"") : "";
+    const vocab     = localStorage.getItem("sb_vocab") || "";
+    const apiPath   = isMoonJA ? "/api/moonshine-transcribe" : "/api/transcribe";
+    const resp = await fetch(apiPath, {
+      method:"POST",
+      headers:{
+        "Content-Type":    currentMimeType||"audio/webm",
         "X-HF-Token":      hfToken,
-        "X-Diarize-Model": diarizeModel
+        "X-Diarize-Model": dModel,
+        "X-Session-ID":    _sessionId||"default",
+        "X-Vocab":         vocab
       },
       body: blob
     });
-
     const data = await resp.json();
     if (data.error) {
       showError("文字起こしエラー: " + data.error);
-      return;
-    }
-    if (data.segments && data.segments.length > 0) {
+    } else if (data.segments && data.segments.length>0) {
       processSegments(data.segments);
     }
   } catch(e) {
     showError("文字起こし失敗: " + e.message);
   } finally {
     isTranscribing = false;
-    setStatus(isRecording ? "rec" : "idle");
-    // 次のチャンクが始まっていれば進行バー再開
     if (isRecording) startChunkProgress();
     updateTranscript();
+    _processQueue();
   }
 }
 
 // ============================================================
-// セグメント処理（WhisperX → 表示・分析トリガー）
+// セグメント処理
 // ============================================================
 function processSegments(segments) {
+  let hasText = false;
   for (const seg of segments) {
-    const text = (seg.text || "").trim();
+    const text = (seg.text||"").trim();
     if (!text) continue;
-
-    const sp = normalizeSpeaker(seg.speaker || "SPEAKER_00");
-
-    // transcript（全文）と pendingText（未分析分）に追記
-    transcript   += (transcript   ? "\n" : "") + `[${sp.label}] ${text}`;
-    pendingText  += (pendingText  ? " "  : "")  + text;
+    hasText = true;
+    const sp = normalizeSpeaker(seg.speaker||"SPEAKER_00");
+    transcript  += (transcript  ? "\n":"") + `[${sp.label}] ${text}`;
+    pendingText += (pendingText ? " ":"")  + text;
     charsSinceAnalysis += text.length;
-
-    // 話者セグメント蓄積（連続同一話者はマージ）
-    const last = merged.speaker_segments[merged.speaker_segments.length - 1];
-    if (last && last.speaker === seg.speaker) {
-      last.text += "　" + text;
-    } else {
-      merged.speaker_segments.push({ speaker: seg.speaker, text });
-    }
+    merged.speaker_segments.push({ speaker: seg.speaker, text });
   }
-
+  if (hasText) _lastSpeechTime = Date.now(); // WhisperXが発話を検出した時刻を更新
   document.getElementById("btnAnalyze").disabled = false;
   updateTranscript();
-
-  // 自動分析トリガー
-  if (document.getElementById("autoAnalyze").checked &&
-      charsSinceAnalysis >= THRESHOLD && !isAnalyzing) {
+  if (autoAnalyzeEnabled && charsSinceAnalysis>=THRESHOLD && !isAnalyzing) {
     analyzeNow();
+  }
+
+  // WhisperXチャンクから話者名を昇格表示
+  const lastSeg = segments[segments.length - 1];
+  if (lastSeg && lastSeg.speaker) {
+    _lastSpeaker = normalizeSpeaker(lastSeg.speaker).label;
+    updateNowBar();
   }
 }
 
 // ============================================================
-// Claude 分析
+// Claude 分析 (Sliding Window)
 // ============================================================
 async function analyzeNow() {
   const toAnalyze = pendingText.trim() || transcript.trim();
   if (!toAnalyze || isAnalyzing) return;
+  if (!localStorage.getItem("sb_azure_api_key") || !localStorage.getItem("sb_azure_endpoint") || !localStorage.getItem("sb_azure_deployment")) {
+    showError("Azure OpenAI の設定が不完全です。⚙ からエンドポイント・デプロイ名・APIキーを設定してください。"); return;
+  }
 
-  const apiKey = localStorage.getItem("sb_api_key");
-  if (!apiKey) { showError("APIキーが未設定です。⚙ から設定してください。"); return; }
+  // 前回の状態をスナップショット（新規アイテム判定用）
+  const prevMerged = {
+    sections:     (merged.sections||[]).map(s => ({...s, items:[...(s.items||[])]})),
+    decisions:    [...(merged.decisions||[])],
+    action_items: [...(merged.action_items||[])],
+    open_issues:  [...(merged.open_issues||[])]
+  };
 
   isAnalyzing = true;
   charsSinceAnalysis = 0;
-  setStatus("analyzing");
+  // スケルトン表示なし — 分析中も既存の内容をそのまま維持
+  const analyzeBtn = document.getElementById("btnAnalyze");
+  analyzeBtn.textContent = "⟳ 分析中...";
 
-  // 既存の話者リストをコンテキストとして渡し、ラベルを一貫させる
-  const knownSpeakers = [...new Set(merged.speaker_segments.map(s => {
-    const sp = speakerMap[s.speaker];
-    return sp ? sp.label : s.speaker;
-  }))];
-  const speakerCtx = knownSpeakers.length > 0
-    ? `\n前回の話者識別（参考）: ${knownSpeakers.join(", ")} が登場済み`
-    : "";
+  const prevJson = JSON.stringify({
+    current_topic:     merged.current_topic,
+    meeting_goal:      merged.meeting_goal,
+    pending_decisions: merged.pending_decisions,
+    sections:          merged.sections,
+    decisions:         merged.decisions,
+    action_items:      merged.action_items,
+    open_issues:       merged.open_issues||[],
+    summary:           merged.summary,
+    summary_refs:      merged.summary_refs
+  }, null, 2);
 
-  const userMsg = pendingText.trim()
-    ? `【全体のコンテキスト】\n${transcript.trim()}\n\n【直近の新しい発言】\n${pendingText.trim()}${speakerCtx}\n\n直近の発言を重視しつつ、全体の文脈を踏まえて分析してください。`
-    : `以下の文字起こしを分析してください：\n\n${toAnalyze}`;
+  const newText = pendingText.trim() || toAnalyze;
+  const userMsg = `【前回の分析結果】\n${prevJson}\n\n【新しい発言】\n${newText}`;
 
+  const _analyzeUrl  = "/api/analyze";
+  const _analyzeBody = {
+    azure_api_key:     localStorage.getItem("sb_azure_api_key")     || "",
+    azure_endpoint:    localStorage.getItem("sb_azure_endpoint")    || "",
+    azure_deployment:  localStorage.getItem("sb_azure_deployment")  || "",
+    azure_api_version: localStorage.getItem("sb_azure_api_version") || "",
+    max_tokens: 3000,
+    system:  SYSTEM_PROMPT,
+    messages:[{ role:"user", content:userMsg }]
+  };
   try {
-    const resp = await fetch("/api/analyze", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        api_key: apiKey,
-        model: "claude-sonnet-4-20250514",
-        max_tokens: 1000,
-        system: SYSTEM_PROMPT,
-        messages: [{ role: "user", content: userMsg }]
-      })
+    const resp = await fetch(_analyzeUrl, {
+      method:"POST",
+      headers:{"Content-Type":"application/json"},
+      body: JSON.stringify(_analyzeBody)
     });
-
     const data = await resp.json();
     if (data.error) { showError(data.error); return; }
 
-    const raw     = (data.content||[]).map(c=>c.text||"").join("");
-    const cleaned = raw.replace(/```json\s*|```/g, "").trim();
+    const raw    = (data.content||[]).map(c=>c.text||"").join("");
+    const cleaned = raw.replace(/```json\s*|```/g,"").trim();
     const parsed  = JSON.parse(cleaned);
 
-    merged.current_topic  = parsed.current_topic || merged.current_topic;
-    merged.summary        = parsed.summary       || merged.summary;
-    merged.key_points     = [...new Set([...merged.key_points, ...(parsed.key_points||[])])].slice(-8);
-    merged.decisions      = [...new Set([...merged.decisions,  ...(parsed.decisions ||[])])];
-    merged.action_items   = [...new Set([...merged.action_items,...(parsed.action_items||[])])];
+    if (parsed.current_topic)    merged.current_topic    = parsed.current_topic;
+    if (parsed.summary)          merged.summary          = parsed.summary;
+    if (parsed.meeting_goal)     merged.meeting_goal     = parsed.meeting_goal;
+    merged.pending_decisions = parsed.pending_decisions||[];
+    if (parsed.sections)         merged.sections         = parsed.sections;
+    if (parsed.decisions)        merged.decisions        = parsed.decisions;
+    if (parsed.action_items)     merged.action_items     = parsed.action_items;
+    merged.open_issues   = parsed.open_issues||[];
+    merged.summary_refs  = parsed.summary_refs||[];
+
+    // タイムスタンプ記録
+    (parsed.sections||[]).flatMap(s => s.items||[]).forEach(p => {
+      _stampItem(p);
+      (p.refs||[]).forEach(r => { if (r.note) _stampItem(r.note); }); // ref補足にも記録
+    });
+    (parsed.action_items||[]).forEach(t => _stampItem(t));
+    (parsed.open_issues||[]).forEach(t  => _stampItem(t));
+    (parsed.decisions||[]).forEach(d    => _stampItem(typeof d==="object"?d.content:d));
 
     analysisCount++;
-    historyLog.push({ ts: new Date().toLocaleTimeString(), summary: parsed.summary||"(要約なし)" });
-    pendingText = "";
-    updateAnalysisUI();
+    historyLog.push({ ts: new Date().toLocaleTimeString("ja-JP",{hour:"2-digit",minute:"2-digit"}), summary: parsed.summary||"(要約なし)" });
+    updateAnalysisUI(prevMerged);
 
   } catch(e) {
     showError("分析エラー: " + e.message);
   } finally {
+    pendingText = "";   // 成功・失敗・エラーどれでも必ずクリア（重複分析防止）
     isAnalyzing = false;
-    setStatus(isRecording ? "rec" : "idle");
+    document.getElementById("btnAnalyze").textContent = "🔍 分析";
   }
 }
 
 // ============================================================
-// エクスポート（Markdown）
+// Markdown エクスポート
 // ============================================================
 function exportMd() {
   if (!merged.current_topic && !transcript) { showError("データがありません"); return; }
-
-  // 話者別文字起こしセクション
-  let speakerSection = "";
-  if (merged.speaker_segments.length > 0) {
-    speakerSection = "\n\n## 話者別文字起こし\n" +
-      merged.speaker_segments.map(seg => {
+  const confTextMap = { high:"✅ 確定", medium:"🔄 暫定", low:"💭 要検討" };
+  const kpText = (merged.sections||[]).length
+    ? (merged.sections||[]).map(sec => {
+        const header = `### ${sec.title||"（無題）"}`;
+        const items = (sec.items||[]).map(p => {
+          const text   = _itemText(p);
+          const status = typeof p==="object" ? (p.status||"💡") : "💡";
+          return `  - ${status} ${text}`;
+        }).join("\n");
+        return header + (items ? "\n" + items : "");
+      }).join("\n")
+    : "（なし）";
+  const dText = merged.decisions.length
+    ? merged.decisions.map(d => {
+        const content = typeof d==="object"?(d.content||""):d;
+        const conf    = (typeof d==="object"&&d.confidence)?d.confidence:"medium";
+        return `- [${confTextMap[conf]||conf}] ${content}`;
+      }).join("\n")
+    : "（なし）";
+  let spSection = "";
+  if (merged.speaker_segments.length>0) {
+    spSection = "\n\n## 話者別文字起こし\n" +
+      merged.speaker_segments.map(seg=>{
         const sp = speakerMap[seg.speaker];
-        const label = sp ? sp.label : seg.speaker;
-        return `**${label}**: ${seg.text}`;
+        return `**${sp?sp.label:seg.speaker}**: ${seg.text}`;
       }).join("\n");
   }
-
   const md = `# 会議メモ - ${new Date().toLocaleDateString("ja-JP")}
 
 ## 議題
 ${merged.current_topic||"（未検出）"}
 
+## 🎯 この会議の狙い（AI推測）
+${merged.meeting_goal||"（未推測）"}
+
+## 🔮 まだ決めていないこと（AI先読み）
+${merged.pending_decisions&&merged.pending_decisions.length?merged.pending_decisions.map(p=>"- ◇ "+p).join("\n"):"（なし）"}
+
 ## 要約
 ${merged.summary||"（未分析）"}
 
+## 📎 横断議録（複数チャプターにまたがるテーマ）
+${(merged.summary_refs||[]).length
+  ? (merged.summary_refs||[]).map(ref => {
+      const chapLines = (ref.chapters||[]).map(ch => {
+        const items = (ch.texts||[]).map(t => `    - ${t}`).join("\n");
+        return `  ### ${ch.section}\n${items}`;
+      }).join("\n");
+      return `### 📎 ${ref.label}\n${chapLines}`;
+    }).join("\n")
+  : "（なし）"}
+
 ## 論点
-${merged.key_points.length ? merged.key_points.map(p=>"- "+p).join("\n") : "（なし）"}
+${kpText}
 
 ## 決定事項
-${merged.decisions.length ? merged.decisions.map(d=>"- "+d).join("\n") : "（なし）"}
+${dText}
 
-## アクションアイテム
-${merged.action_items.length ? merged.action_items.map(a=>"- "+a).join("\n") : "（なし）"}
-${speakerSection}
+## やること（アクションアイテム）
+${merged.action_items.length?merged.action_items.map(a=>"- "+a).join("\n"):"（なし）"}
+
+## 保留・未解決の論点
+${merged.open_issues&&merged.open_issues.length?merged.open_issues.map(o=>"- "+o).join("\n"):"（なし）"}
+${spSection}
 
 ---
 ## 文字起こし全文
@@ -732,36 +2014,49 @@ ${transcript||"（なし）"}`;
 // リセット
 // ============================================================
 function resetAll() {
-  stopRecording();
+  if (_sessionId) {
+    fetch(`/api/reset_session?session_id=${_sessionId}`).catch(()=>{});
+    _sessionId = null;
+  }
+  stopRecording(); // stopRecording内でsilenceCheckIntervalもクリア済み
   transcript=""; pendingText=""; charsSinceAnalysis=0; startTime=null; analysisCount=0;
-  merged = { current_topic:"", key_points:[], decisions:[], action_items:[], summary:"", speaker_segments:[] };
+  merged = { current_topic:"", meeting_goal:"", pending_decisions:[], sections:[], decisions:[], action_items:[], open_issues:[], summary:"", summary_refs:[], speaker_segments:[] };
   historyLog = [];
-  // 話者マップをクリア
-  Object.keys(speakerMap).forEach(k => delete speakerMap[k]);
+  Object.keys(speakerMap).forEach(k=>delete speakerMap[k]);
+  Object.keys(_itemTimestamps).forEach(k=>delete _itemTimestamps[k]);
+  _lastRecTime = "00:00";
 
   document.getElementById("timer").textContent    = "00:00";
-  document.getElementById("charCount").textContent = "0文字";
-  document.getElementById("analysisCount").textContent = "0回分析";
+  document.getElementById("timer").className      = "timer";
   document.getElementById("btnAnalyze").disabled  = true;
   document.getElementById("progressWrap").style.display = "none";
-  document.getElementById("transcriptContent").innerHTML =
-    `<div class="transcript-empty"><div>
-      <div class="transcript-empty-icon">🎤</div>
-      <p>録音を開始してください</p>
-      <p class="sub">WhisperXがチャンクごとに文字起こし＋話者分離します</p>
-    </div></div>`;
-  document.getElementById("transcriptContent").className = "transcript-empty";
-  document.getElementById("currentTopic").textContent = "（録音開始後に自動検出）";
-  document.getElementById("summaryText").textContent  = "分析結果がここに表示されます";
-  document.getElementById("keyPoints").innerHTML      = '<li class="empty-state">（検出された論点がここに表示されます）</li>';
-  document.getElementById("decisions").innerHTML      = '<li class="empty-state">（決定事項が検出されると表示）</li>';
-  document.getElementById("actionItems").innerHTML    = '<li class="empty-state">（アクションが検出されると表示）</li>';
-  document.getElementById("analysisHistory").innerHTML= '<div class="empty-state">分析結果の履歴がここに蓄積されます</div>';
+  document.getElementById("transcriptContent").innerHTML = "";
+  document.getElementById("currentTopic").textContent = "録音を開始すると自動検出されます";
+  document.getElementById("currentTopic").className   = "topic-empty";
+  document.getElementById("summaryText").textContent   = "（分析後に表示）";
+  document.getElementById("summaryText").className     = "summary-text empty-state";
+  document.getElementById("keyPoints").innerHTML   = '<li class="empty-state">（分析後に表示されます）</li>';
+  document.getElementById("decisions").innerHTML   = '<div class="empty-state">（決定事項が検出されると表示）</div>';
+  document.getElementById("actionItems").innerHTML = '<div class="empty-state">（タスクが検出されると表示）</div>';
+  document.getElementById("openIssues").innerHTML      = '<li class="empty-state">（保留事項が検出されると表示）</li>';
+  document.getElementById("pendingDecisions").innerHTML = '<li class="empty-state">（推測されると表示）</li>';
+  document.getElementById("meetingGoal").textContent    = "";
+  document.getElementById("summaryRefs").innerHTML      = "";
+  document.getElementById("goalBlock").style.display    = "none";
+  document.getElementById("analysisHistory").innerHTML = '<div class="empty-state">（履歴がここに蓄積されます）</div>';
+  document.getElementById("analysisCount").textContent = "（0回）";
+  document.getElementById("cntIdea").textContent = "0";
+  document.getElementById("cntQ").textContent    = "0";
+  document.getElementById("cntOk").textContent   = "0";
+  document.getElementById("cntWarn").textContent = "0";
+  document.getElementById("mobTopic").textContent  = "録音を開始してください";
+  document.getElementById("mobCounts").textContent = "💡0 ❓0 ✅0 ⚠️0";
+
+  // WSR状態リセット
+  _liveText = ""; _lastSpeaker = null; _activeKP = -1;
+  document.getElementById("nowBar").style.display = "none";
   hideError();
 }
-
-// Init
-document.getElementById("thresholdLabel").textContent = THRESHOLD;
 </script>
 </body>
 </html>
